@@ -133,6 +133,8 @@ package kissjson
 package object kissjson
 {
 	implicit def implicitJson(in: String)   = JsonString (in)
+	implicit def implicitJson(in: Boolean)  = JsonBoolean(in)
+	implicit def implicitJson(in: Null)     = JsonNull
 	implicit def implicitJson(in: Byte)     = JsonInteger(in)
 	implicit def implicitJson(in: Short)    = JsonInteger(in)
 	implicit def implicitJson(in: Int)      = JsonInteger(in)
