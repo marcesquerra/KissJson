@@ -38,9 +38,26 @@ object JsonParser extends App
 			.asJson
 			.getOrElse(throw new Exception("Invalid Json"))
 			.asArray
-			.getOrElse(throw new Exception("This Json is not an Object"))
+			.getOrElse(throw new Exception("This Json is not an Array"))
 
 	// The Json Values are converted to their json representation
 	println(jsonArray(0) + " " + jsonArray(1))
+
+
+
+
+	// A JSON Boolean
+
+	val jsonBooleanString = "true"
+
+	val jsonBoolean =
+			jsonBooleanString
+			.asJson
+			.getOrElse(throw new Exception("Invalid Json"))
+			.asBoolean
+			.getOrElse(throw new Exception("This Json is not a Boolean"))
+
+	// The Json Values are converted to their json representation
+	println(jsonBoolean)
 
 }
