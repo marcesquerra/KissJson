@@ -256,18 +256,18 @@ package object kissjson
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
-// JsonObject
+// Literals & Tools
 ////////////////////////////////////////////////////////////////////////////////
 
-	implicit def implicitJson(in: String)   = JsonString  (in)
-	implicit def implicitJson(in: Boolean)  = JsonBoolean (in)
-	implicit def implicitJson(in: Null)     = JsonNull
-	implicit def implicitJson(in: Byte)     = JsonNumber  (in)
-	implicit def implicitJson(in: Short)    = JsonNumber  (in)
-	implicit def implicitJson(in: Int)      = JsonNumber  (in)
-	implicit def implicitJson(in: Long)     = JsonNumber  (in)
-	implicit def implicitJson(in: Float)    = JsonNumber  (in)
-	implicit def implicitJson(in: Double)   = JsonNumber  (in)
+	implicit def implicitJson(in: String):  JsonString    = JsonString  (in)
+	implicit def implicitJson(in: Boolean): JsonBoolean   = JsonBoolean (in)
+	implicit def implicitJson(in: Null):    JsonNull.type = JsonNull
+	implicit def implicitJson(in: Byte):    JsonNumber    = JsonNumber  (in)
+	implicit def implicitJson(in: Short):   JsonNumber    = JsonNumber  (in)
+	implicit def implicitJson(in: Int):     JsonNumber    = JsonNumber  (in)
+	implicit def implicitJson(in: Long):    JsonNumber    = JsonNumber  (in)
+	implicit def implicitJson(in: Float):   JsonNumber    = JsonNumber  (in)
+	implicit def implicitJson(in: Double):  JsonNumber    = JsonNumber  (in)
 
 	def J(in: JsonValue[_]*)                = JsonArray(in:_*)
 	def J(in: (String, JsonValue[_])*)      = JsonObject(in:_*)
@@ -278,7 +278,7 @@ package object kissjson
 		def asJson: Option[JsonValue[_]] = parser.JsonParser(in)
 
 		@inline
-		def :=[T] (value: JsonValue[T]): Tuple2[String, JsonValue[T]] = Tuple2(in, value)
+		def :=[U <% JsonValue[_]] (value: U): Tuple2[String, JsonValue[_]] = Tuple2(in, value)
 	}
 
 }
