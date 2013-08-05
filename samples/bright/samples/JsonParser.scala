@@ -18,8 +18,6 @@ object JsonParser extends App
 			jsonObjectString
 			.asJson
 			.getOrElse(throw new Exception("Invalid Json"))
-			.asObject
-			.getOrElse(throw new Exception("This Json is not an Object"))
 
 	// The Json Values are converted to their json representation
 	println(jsonObject.name + " " + jsonObject.surname)
@@ -37,8 +35,6 @@ object JsonParser extends App
 			jsonArrayString
 			.asJson
 			.getOrElse(throw new Exception("Invalid Json"))
-			.asArray
-			.getOrElse(throw new Exception("This Json is not an Object"))
 
 	// The Json Values are converted to their json representation
 	println(jsonArray(0) + " " + jsonArray(1))

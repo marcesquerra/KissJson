@@ -10,7 +10,7 @@ package kissjson.parser
 object JsonParser
 {
 
-	def apply(in: String): Option[JsonValue] = {
+	def apply(in: String): Option[JsonValue[_]] = {
 
 		val source = in.trim()
 
@@ -18,21 +18,21 @@ object JsonParser
 			Some(JsonBoolean(true))
 		else if(in == "false")
 			Some(JsonBoolean(false))
-		else if(in(0) == '[' || in(0) == '{')
+		else if (source.charAt(0) == '[' || source.charAt(0) == '{')
 			parseObjectOrArray(source)
 		else
-			parseObjectOrArray(s"[$source]").map{_.asArray.getOrElse(JsonArray())(0)}
+			parseObjectOrArray(s"[$source]").map{_(0)}
 	}
 
-	private def parseObjectOrArray(source: String): Option[JsonValue] = {
+	private def parseObjectOrArray(source: String): Option[JsonValue[_]] = {
 
-		JSON.globalNumberParser = in => try{JsonInteger(in.toLong)}catch{case t: NumberFormatException => JsonDouble(in.toDouble)}
+		JSON.globalNumberParser = in => try{JsonNumber(in.toLong)}catch{case t: NumberFormatException => JsonNumber(in.toDouble)}
 
 		JSON.parseFull(source) map convert
 
 	}
 
-	private def convert(in: Any): JsonValue = in match {
+	private def convert(in: Any): JsonValue[_] = in match {
 			case a: List    [Any]  => JsonArray   (a map convert)
 			case o: Map     [_, _] => JsonObject  (o map {case (k, v) => (k.asInstanceOf[String], convert(v))})
 			case b: Boolean        => JsonBoolean (b)

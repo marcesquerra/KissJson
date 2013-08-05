@@ -1,157 +1,284 @@
 package com.bryghts
 
-import scala.language.dynamics
-import scala.language.implicitConversions
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
-import scala.util.parsing.json.JSON
+import scala.language.dynamics
 
-package kissjson
+package object kissjson
 {
 
-	sealed trait JsonValue
+	sealed abstract class JsonValue[+T] extends IndexedSeq[JsonValue[_]] with Dynamic
 	{
+		def selectDynamic(name: String): JsonValue[_] = JsonNull
+		def applyDynamic(name: String)(i: Int): JsonValue[_] = selectDynamic(name).apply(i)
 
-		def isNull = false
+		def toString: String
+		def toJson: String = toString
 
-		def map(pf: PartialFunction[JsonValue, JsonValue]) = if(pf.isDefinedAt(this)) pf(this)
+		def apply(idx: Int): JsonValue[_] = JsonNull
+		def length: Int = 0
+		def value: Any
+		def isNull:Boolean = false
 
-		def asArray:   Option[JsonArray]   = None
-		def asObject:  Option[JsonObject]  = None
-		def asBoolean: Option[JsonBoolean] = None
-		def asNumber:  Option[JsonNumber]  = None
-		def asString:  Option[JsonString]  = None
-
+		override def equals(in: Any) = in.isInstanceOf[JsonValue[_]] && in.asInstanceOf[JsonValue[_]].value == value
 	}
 
-	case object JsonNull extends JsonValue
+
+////////////////////////////////////////////////////////////////////////////////
+// NULL
+////////////////////////////////////////////////////////////////////////////////
+
+	object JsonNull extends JsonValue[Nothing]
 	{
-		override def isNull   = true
 		override def toString = "null"
+		val value: Null = null
+		def unapply(v: JsonValue[_]): Boolean = {
+			println("....." + v)
+//			if(v eq this) Some(this) else None
+			v eq this
+		}
+
+		override def equals(in: Any) = in.isInstanceOf[AnyRef] && in.asInstanceOf[AnyRef].eq(this)
+		override def isNull: Boolean = true
 	}
 
-	case class JsonBoolean(in: Boolean) extends JsonValue
+////////////////////////////////////////////////////////////////////////////////
+// Boolean
+////////////////////////////////////////////////////////////////////////////////
+
+	type JsonBoolean = JsonValue[Boolean]
+
+	class JsonBooleanImpl private[kissjson](val value: Boolean) extends JsonBoolean
 	{
-		override def toString  = in.toString
-		override def asBoolean = Some(this)
+		override def toString: String = value.toString
 	}
 
-	case class JsonString(in: String) extends JsonValue
+	object JsonBoolean
 	{
-		override def toString = '"' + in.replaceAll("\"", "\\\"") + '"'
-		override def asString = Some(this)
+		def apply(value: Boolean):JsonBoolean = new JsonBooleanImpl(value)
+
+		def unapply(in: Any): Option[Boolean] = in match {
+			case v: JsonBooleanImpl => Some(v.value)
+			case _ => None
+		}
 	}
 
-	sealed trait JsonNumber extends JsonValue
+
+////////////////////////////////////////////////////////////////////////////////
+// STRING
+////////////////////////////////////////////////////////////////////////////////
+
+	type JsonString = JsonValue[String]
+
+	class JsonStringImpl private[kissjson](val value: String) extends JsonString
 	{
-		def toLong: Long
-		def toDouble: Double
-		override def asNumber = Some(this)
+		override def toString: String = value
+		override def toJson: String = '"' + value.replaceAll("\"","\\\"") + '"'
+	}
+
+	object JsonString
+	{
+		def apply(value: String):JsonString = new JsonStringImpl(value)
+
+		def unapply(in: Any): Option[String] = in match {
+			case v: JsonStringImpl => Some(v.value)
+			case _ => None
+		}
+	}
+
+////////////////////////////////////////////////////////////////////////////////
+// Number
+////////////////////////////////////////////////////////////////////////////////
+
+	sealed abstract class NumberWrapper[T]{
+		def value: T
+	}
+
+	case class IntegerWrapper (value: Long)   extends NumberWrapper[Long]
+	case class RealWrapper    (value: Double) extends NumberWrapper[Double]
+
+	type JsonNumber    = JsonValue[NumberWrapper[_]]
+	type JsonInteger   = JsonValue[NumberWrapper[Long]]
+	type JsonReal      = JsonValue[NumberWrapper[Double]]
+
+	class JsonIntegerImpl private[kissjson](private[kissjson] val internal: IntegerWrapper) extends JsonInteger
+	{
+		def value = internal.value
+		override def toString: String = value.toString
+	}
+
+	class JsonRealImpl private[kissjson](private[kissjson] val internal: RealWrapper) extends JsonReal
+	{
+		def value = internal.value
+		override def toString: String = value.toString
 	}
 
 	object JsonNumber
 	{
-		def apply(in: Byte):   JsonNumber  = JsonInteger(in)
-		def apply(in: Short):  JsonNumber  = JsonInteger(in)
-		def apply(in: Int):    JsonNumber  = JsonInteger(in)
-		def apply(in: Long):   JsonNumber  = JsonInteger(in)
-		def apply(in: Float):  JsonNumber  = JsonDouble(in)
-		def apply(in: Double): JsonNumber  = JsonDouble(in)
-	}
+		def apply(value: Long):    JsonInteger = new JsonIntegerImpl(IntegerWrapper(value))
+		def apply(value: Int):     JsonInteger = new JsonIntegerImpl(IntegerWrapper(value))
+		def apply(value: Short):   JsonInteger = new JsonIntegerImpl(IntegerWrapper(value))
+		def apply(value: Byte):    JsonInteger = new JsonIntegerImpl(IntegerWrapper(value))
+		def apply(value: Double):  JsonReal    = new JsonRealImpl(RealWrapper(value))
+		def apply(value: Float):   JsonReal    = new JsonRealImpl(RealWrapper(value))
 
-	case class JsonInteger(val in: Long) extends JsonNumber
-	                                        with JsonValue
-	{
-		override def toLong   = in
-		override def toDouble = in
-	
-		override def toString = in.toString
-	}
-
-	case class JsonDouble(val in: Double) extends JsonNumber
-	                                         with JsonValue
-	{
-		override def toLong   = in.toInt
-		override def toDouble = in
-	
-		override def toString = in.toString
-	}
-
-	class JsonArray(private val in: Vector[JsonValue]) extends JsonValue
-	//                                         with IndexedSeq[JsonValue]
-	{
-		def apply(idx: Int): JsonValue = in(idx)
-		def length: Int = in.length
-	
-		override def toString = in.mkString("[", ", ", "]")
-	
-		def map(f: JsonValue => JsonValue): JsonArray = new JsonArray(in map f)
-		def flatMap(f: JsonValue => JsonArray): JsonArray = new JsonArray(in.flatMap{x => f(x).in})
-		def filter(p: JsonValue => Boolean): JsonArray = new JsonArray(in filter p)
-	
-		def toVector[B](f: JsonValue => B): Vector[B] = in map f
-		def toArray[B](f: JsonValue => B)(implicit ct: ClassTag[B]): Array[B] = toVector(f).toArray
-		def toList[B](f: JsonValue => B): List[B] = (in map f).toList
-		def foldLeft[B](z: B)(f: (B, JsonValue) => B): B = in.foldLeft(z)(f)
-		def foldRight[B](z: B)(f: (JsonValue, B) => B): B = in.foldRight(z)(f)
-	
-		override def asArray:Option[JsonArray] = Some(this)
-	}
-
-	object JsonArray {
-		def apply(in: JsonValue*) = new JsonArray(in.toVector)
-		def apply(in: Traversable[JsonValue]) = new JsonArray(in.toVector)
-		def unapply(in: JsonValue): Option[JsonArray] = in match {
-		  case a: JsonArray => Some(a)
-		  case _ => None
+		def unapply(in: Any): Option[NumberWrapper[_]] = in match {
+			case v: JsonIntegerImpl => Some(v.internal)
+			case v: JsonRealImpl    => Some(v.internal)
+			case _ => None
 		}
 	}
 
-	class JsonObject(in: Map[String, JsonValue]) extends JsonValue
-	                                                with Dynamic
+	object JsonInteger
 	{
-		def selectDynamic(name: String): JsonValue = in.get(name).getOrElse(JsonNull)
-		def applyDynamic(name: String)(value: JsonValue): JsonObject = JsonObject(in + (name -> value))
+		def unapply(in: Any): Option[Long] = in match {
+			case v: JsonIntegerImpl => Some(v.value)
+			case _ => None
+		}
+	}
 
-		override def toString = in.map{p => '"' + p._1.replaceAll("\"", "\\\"") + "\": " + p._2}.mkString("{", ", ", "}")
-		override def asObject = Some(this)
+	object JsonReal
+	{
+		def unapply(in: Any): Option[Double] = in match {
+			case v: JsonRealImpl => Some(v.value)
+			case _ => None
+		}
+	}
+////////////////////////////////////////////////////////////////////////////////
+// Array
+////////////////////////////////////////////////////////////////////////////////
+
+	type JsonArray = JsonValue[Vector[JsonValue[_]]]
+
+	class JsonArrayImpl private[kissjson](val value: Vector[JsonValue[_]]) extends JsonArray
+	{
+		override def toString: String = value.mkString("[", ", ", "]")
+		override def toJson: String = value.map{_.toJson}.mkString("[", ", ", "]")
+
+		override def apply(idx: Int): JsonValue[_] = if(idx < 0) JsonNull else if(idx >= length) JsonNull else value(idx)
+		override def length: Int = value.length
+	}
+
+	object JsonArray
+	{
+		def apply(value: Traversable[JsonValue[_]]):JsonArray = new JsonArrayImpl(value.toVector)
+		def apply(in: JsonValue[_]*) = new JsonArrayImpl(in.toVector)
+
+		def unapply(in: Any): Option[Vector[JsonValue[_]]] = in match {
+			case v: JsonArrayImpl => Some(v.value)
+			case _ => None
+		}
+	}
+
+	class JsonArrayBuilder(source: Builder[JsonValue[_], Vector[JsonValue[_]]]) extends Builder[JsonValue[_], JsonArray]
+	{self =>
+		def +=(elem: JsonValue[_]) = new JsonArrayBuilder(source += elem).asInstanceOf[self.type]
+
+		def clear(): Unit = source.clear
+		def result(): JsonArray = JsonArray(source.result())
+	}
+
+	implicit object CanBuildJsonArray extends CanBuildFrom[IndexedSeq[JsonValue[_]],JsonValue[_],JsonArray]
+	{
+		private val source: CanBuildFrom[Vector[JsonValue[_]], JsonValue[_], Vector[JsonValue[_]]] = implicitly
+
+		def apply(): Builder[JsonValue[_], JsonArray] = new JsonArrayBuilder(source())
+		def apply(from: IndexedSeq[JsonValue[_]]): Builder[JsonValue[_], JsonArray] = from match {
+			case a: JsonArrayImpl => new JsonArrayBuilder(source(a.value))
+			case _ => new JsonArrayBuilder(source(Vector()))
+		}
+	}
+
+	private trait JsonBuilder[T, JT <: JsonValue[T]]{
+		def apply(in: T): JT
+	}
+
+	private def CreateBuilder[T, JT <: JsonValue[_]](b: T => JT): CanBuildFrom[IndexedSeq[JsonValue[_]], T, JsonArray] = {
+
+			class JtJsonArrayBuilder(source: Builder[JT, Vector[JT]]) extends Builder[T, JsonArray]
+			{self =>
+				def +=(elem: T) = new JtJsonArrayBuilder(source += b(elem)).asInstanceOf[self.type]
+		
+				def clear(): Unit = source.clear
+				def result(): JsonArray = JsonArray(source.result())
+			}
+
+			new CanBuildFrom[IndexedSeq[JsonValue[_]],T,JsonArray]
+			{
+				private val source: CanBuildFrom[Vector[JsonValue[_]], JT, Vector[JT]] = implicitly
+		
+				def apply(): Builder[T, JsonArray] = new JtJsonArrayBuilder(source())
+				def apply(from: IndexedSeq[JsonValue[_]]): Builder[T, JsonArray] = from match {
+					case a: JsonArrayImpl => new JtJsonArrayBuilder(source(a.value))
+					case _ => new JtJsonArrayBuilder(source(Vector()))
+				}
+			}
+	}
+
+	
+	implicit val CanBuildJsonArrayFromStrings  = CreateBuilder[String,  JsonString]  (JsonString  (_))
+	implicit val CanBuildJsonArrayFromBooleans = CreateBuilder[Boolean, JsonBoolean] (JsonBoolean (_))
+	implicit val CanBuildJsonArrayFromLongs    = CreateBuilder[Long,    JsonInteger] (JsonNumber  (_))
+	implicit val CanBuildJsonArrayFromIntegers = CreateBuilder[Int,     JsonInteger] (JsonNumber  (_))
+	implicit val CanBuildJsonArrayFromShorts   = CreateBuilder[Short,   JsonInteger] (JsonNumber  (_))
+	implicit val CanBuildJsonArrayFromByte     = CreateBuilder[Byte,    JsonInteger] (JsonNumber  (_))
+	implicit val CanBuildJsonArrayFromDoubles  = CreateBuilder[Double,  JsonReal]    (JsonNumber  (_))
+	implicit val CanBuildJsonArrayFromFloats   = CreateBuilder[Float,   JsonReal]    (JsonNumber  (_))
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// JsonObject
+////////////////////////////////////////////////////////////////////////////////
+
+	type JsonObject = JsonValue[Map[String, JsonValue[_]]]
+
+	class JsonObjectImpl private[kissjson](internal: Map[String, JsonValue[_]]) extends JsonObject with Dynamic
+	{
+		val value = internal.filterNot{case (_, v) => v == JsonNull}
+
+		override def toString: String = value.map{case (k, v) => s""""$k": "$v""""}.mkString("{", ", ", "}")
+		override def toJson: String   = value.map{case (k, v) => s""""${k.replaceAll("\"", "\\\"")}": ${v.toJson}"""}.mkString("{", ", ", "}")
+
+		override def selectDynamic(name: String): JsonValue[_] = value.get(name).getOrElse(JsonNull)
 	}
 
 	object JsonObject
 	{
-		def apply(in: Map[String, JsonValue]) = new JsonObject(in)
-	
-		def unapply(in: JsonValue): Option[JsonObject] = in match {
-		  case a: JsonObject => Some(a)
-		  case _ => None
+		def apply(value: (String, JsonValue[_])*):JsonObject = new JsonObjectImpl(value.toMap)
+		def apply(value: Map[String, JsonValue[_]]):JsonObject = new JsonObjectImpl(value)
+
+		def unapply(in: Any): Option[Map[String, JsonValue[_]]] = in match {
+			case v: JsonObjectImpl => Some(v.value)
+			case _ => None
 		}
 	}
 
-}
+////////////////////////////////////////////////////////////////////////////////
+// JsonObject
+////////////////////////////////////////////////////////////////////////////////
 
-package object kissjson
-{
-	implicit def implicitJson(in: String)   = JsonString (in)
-	implicit def implicitJson(in: Boolean)  = JsonBoolean(in)
+	implicit def implicitJson(in: String)   = JsonString  (in)
+	implicit def implicitJson(in: Boolean)  = JsonBoolean (in)
 	implicit def implicitJson(in: Null)     = JsonNull
-	implicit def implicitJson(in: Byte)     = JsonInteger(in)
-	implicit def implicitJson(in: Short)    = JsonInteger(in)
-	implicit def implicitJson(in: Int)      = JsonInteger(in)
-	implicit def implicitJson(in: Long)     = JsonInteger(in)
-	implicit def implicitJson(in: Float)    = JsonDouble (in)
-	implicit def implicitJson(in: Double)   = JsonDouble (in)
+	implicit def implicitJson(in: Byte)     = JsonNumber  (in)
+	implicit def implicitJson(in: Short)    = JsonNumber  (in)
+	implicit def implicitJson(in: Int)      = JsonNumber  (in)
+	implicit def implicitJson(in: Long)     = JsonNumber  (in)
+	implicit def implicitJson(in: Float)    = JsonNumber  (in)
+	implicit def implicitJson(in: Double)   = JsonNumber  (in)
 
-	def J(in: JsonValue*)                   = JsonArray(in:_*)
-	def J(in: (String, JsonValue)*)         = JsonObject(in.toMap)
+	def J(in: JsonValue[_]*)                = JsonArray(in:_*)
+	def J(in: (String, JsonValue[_])*)      = JsonObject(in:_*)
 
 	implicit class StringJsonExtensions(val in: String) extends AnyVal
 	{
 		@inline
-		def asJson: Option[JsonValue] = parser.JsonParser(in)
+		def asJson: Option[JsonValue[_]] = parser.JsonParser(in)
 
 		@inline
-		def := (value: JsonValue): Tuple2[String, JsonValue] = Tuple2(in, value)
+		def :=[T] (value: JsonValue[T]): Tuple2[String, JsonValue[T]] = Tuple2(in, value)
 	}
 
 }
