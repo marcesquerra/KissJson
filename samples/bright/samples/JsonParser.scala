@@ -39,4 +39,19 @@ object JsonParser extends App
 	// The Json Values are converted to their json representation
 	println(jsonArray(0) + " " + jsonArray(1))
 
+
+
+
+	// A JSON Boolean
+
+	val jsonBooleanString = "true"
+
+	val jsonBoolean =
+			jsonBooleanString
+			.asJson
+			.getOrElse(throw new Exception("Invalid Json"))
+
+	// The Json Values are converted to their json representation
+	println(jsonBoolean)
+
 }
