@@ -5,6 +5,8 @@ import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
 import scala.language.dynamics
 import scala.language.implicitConversions
+import com.bryghts.kissjson.codec.CaseClassCodec
+import scala.reflect.runtime.universe.TypeTag
 
 package object kissjson
 {
@@ -254,6 +256,16 @@ package object kissjson
 			case v: JsonObjectImpl => Some(v.value)
 			case _ => None
 		}
+	}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Codecs
+////////////////////////////////////////////////////////////////////////////////
+
+	implicit class CaseClassToJsonConversor[T <: Product](val in: T)(implicit t: TypeTag[T]) {
+		def toJson:JsonValue[_] = new CaseClassCodec[T].apply(in)
 	}
 
 ////////////////////////////////////////////////////////////////////////////////
