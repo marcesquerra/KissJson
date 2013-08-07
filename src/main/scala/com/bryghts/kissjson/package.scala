@@ -4,6 +4,7 @@ import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
 import scala.language.dynamics
+import scala.language.implicitConversions
 
 package object kissjson
 {
