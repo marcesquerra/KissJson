@@ -8,8 +8,8 @@ object BuildSettings
 			organization := "com.bryghts.kissjson",
 			version      := "0.0.1-SNAPSHOT",
 			scalaVersion := "2.10.1",
-			scalacOptions ++= Seq()//,
-//			libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.4.7"
+			scalacOptions ++= Seq(),
+			libraryDependencies += "com.bryghts.kissnumber" % "kissnumber_2.10" % "0.0.1"
 	)
 
 }
