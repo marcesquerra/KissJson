@@ -41,8 +41,6 @@ package object kissjson
 		private[kissjson] val v = ()
 		override def getOrElse[B >: Unit](default: => B): B = default
 		def unapply(v: JsonValue[_]): Boolean = {
-			println("....." + v)
-//			if(v eq this) Some(this) else None
 			v eq this
 		}
 
