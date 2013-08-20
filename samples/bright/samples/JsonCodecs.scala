@@ -10,7 +10,7 @@ object JsonCodecs extends App
 
 	println(Person("Jhon", 53, Company("Science of Deduction", "jhon@deduction.com"))
 		.toJson
-		.toJson
+		.render
 	)
 
 }

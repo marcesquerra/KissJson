@@ -15,6 +15,6 @@ object JsonLiteral extends App
 	)
 
 	println(s"The recieved Json is: $json")
-	println(s"And rendered in json format: ${json.toJson}")
+	println(s"And rendered in json format: ${json.render}")
 	println(json.items(1))
 }

@@ -7,11 +7,13 @@ import scala.language.dynamics
 import scala.language.implicitConversions
 import com.bryghts.kissjson.codec._
 import scala.reflect.runtime.universe.TypeTag
-
 import com.bryghts.kissnumber._
+import com.bryghts.kissjson.renderer._
 
 package object kissjson
 {
+
+	type MatchJsonValue = JsonValue[_]
 
 	sealed abstract class JsonValue[+T] extends IndexedSeq[JsonValue[_]] with Dynamic
 	{
@@ -19,11 +21,14 @@ package object kissjson
 		def applyDynamic(name: String)(i: Int): JsonValue[_] = selectDynamic(name).apply(i)
 
 		def toString: String
-		def toJson: String = toString
+		def render(implicit renderer: Renderer): String = renderer.render(this)
 
 		def apply(idx: Int): JsonValue[_] = JsonNull
 		def length: Int = 0
 		def getOrElse[B >: T](default: => B): B = v
+		def asOption: Option[T] = Some(v)
+		def asMap(): Map[String, JsonValue[_]] = Map()
+
 		private[kissjson] def v: T
 		def isNull:Boolean = false
 
@@ -35,11 +40,15 @@ package object kissjson
 // NULL
 ////////////////////////////////////////////////////////////////////////////////
 
+	type MatchJsonNull = JsonNull.type
+
 	object JsonNull extends JsonValue[Unit]
 	{
 		override def toString = "null"
 		private[kissjson] val v = ()
 		override def getOrElse[B >: Unit](default: => B): B = default
+		override def asOption: Option[Unit] = None
+
 		def unapply(v: JsonValue[_]): Boolean = {
 			v eq this
 		}
@@ -53,8 +62,9 @@ package object kissjson
 ////////////////////////////////////////////////////////////////////////////////
 
 	type JsonBoolean = JsonValue[Boolean]
+	type MatchJsonBoolean = JsonBooleanImpl
 
-	class JsonBooleanImpl private[kissjson](private[kissjson] val v: Boolean) extends JsonBoolean
+	final class JsonBooleanImpl private[kissjson](private[kissjson] val v: Boolean) extends JsonBoolean
 	{
 		override def toString: String = v.toString
 	}
@@ -64,7 +74,7 @@ package object kissjson
 		def apply(value: Boolean):JsonBoolean = new JsonBooleanImpl(value)
 
 		def unapply(in: Any): Option[Boolean] = in match {
-			case value: JsonBooleanImpl => Some(value.v)
+			case value: MatchJsonBoolean => Some(value.v)
 			case _ => None
 		}
 	}
@@ -75,11 +85,11 @@ package object kissjson
 ////////////////////////////////////////////////////////////////////////////////
 
 	type JsonString = JsonValue[String]
+	type MatchJsonString = JsonStringImpl
 
-	class JsonStringImpl private[kissjson](private[kissjson] val v: String) extends JsonString
+	final class JsonStringImpl private[kissjson](private[kissjson] val v: String) extends JsonString
 	{
 		override def toString: String = v
-		override def toJson: String = '"' + v.replaceAll("\"","\\\"") + '"'
 	}
 
 	object JsonString
@@ -87,7 +97,7 @@ package object kissjson
 		def apply(value: String):JsonString = new JsonStringImpl(value)
 
 		def unapply(in: Any): Option[String] = in match {
-			case v: JsonStringImpl => Some(v.v)
+			case v: MatchJsonString => Some(v.v)
 			case _ => None
 		}
 	}
@@ -97,16 +107,23 @@ package object kissjson
 ////////////////////////////////////////////////////////////////////////////////
 
 
-	type JsonNumber    = JsonValue[Number]
-	type JsonInteger   = JsonValue[IntegerNumber]
-	type JsonReal      = JsonValue[RealNumber]
+	type JsonNumber       = JsonValue[Number]
+	type MatchJsonNumber  = JsonNumberImpl[_]
 
-	class JsonIntegerImpl private[kissjson](private[kissjson] val v: IntegerNumber) extends JsonInteger
+	type JsonInteger      = JsonValue[IntegerNumber]
+	type MatchJsonInteger = JsonIntegerImpl
+
+	type JsonReal         = JsonValue[RealNumber]
+	type MatchJsonReal    = JsonRealImpl
+
+	sealed abstract class JsonNumberImpl[T <: Number] extends JsonValue[T]
+
+	final class JsonIntegerImpl private[kissjson](private[kissjson] val v: IntegerNumber) extends JsonNumberImpl[IntegerNumber]
 	{
 		override def toString: String = v.toString
 	}
 
-	class JsonRealImpl private[kissjson](private[kissjson] val v: RealNumber) extends JsonReal
+	final class JsonRealImpl private[kissjson](private[kissjson] val v: RealNumber) extends JsonNumberImpl[RealNumber]
 	{
 		override def toString: String = v.toString
 	}
@@ -126,8 +143,8 @@ package object kissjson
 		def apply(value: Double):         JsonReal     = new JsonRealImpl(value)
 
 		def unapply(in: Any): Option[Number] = in match {
-			case v: JsonIntegerImpl => Some(v.v)
-			case v: JsonRealImpl    => Some(v.v)
+			case v: MatchJsonInteger => Some(v.v)
+			case v: MatchJsonReal    => Some(v.v)
 			case _ => None
 		}
 	}
@@ -135,7 +152,7 @@ package object kissjson
 	object JsonInteger
 	{
 		def unapply(in: Any): Option[IntegerNumber] = in match {
-			case v: JsonIntegerImpl => Some(v.v)
+			case v: MatchJsonInteger => Some(v.v)
 			case _ => None
 		}
 	}
@@ -143,20 +160,21 @@ package object kissjson
 	object JsonReal
 	{
 		def unapply(in: Any): Option[RealNumber] = in match {
-			case v: JsonRealImpl => Some(v.v)
+			case v: MatchJsonReal => Some(v.v)
 			case _ => None
 		}
 	}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Array
 ////////////////////////////////////////////////////////////////////////////////
 
-	type JsonArray = JsonValue[Vector[JsonValue[_]]]
+	type JsonArray      = JsonValue[Vector[JsonValue[_]]]
+	type MatchJsonArray = JsonArrayImpl
 
-	class JsonArrayImpl private[kissjson](private[kissjson] val v: Vector[JsonValue[_]]) extends JsonArray
+	final class JsonArrayImpl private[kissjson](private[kissjson] val v: Vector[JsonValue[_]]) extends JsonArray
 	{
 		override def toString: String = v.mkString("[", ", ", "]")
-		override def toJson: String = v.map{_.toJson}.mkString("[", ", ", "]")
 
 		override def apply(idx: Int): JsonValue[_] = if(idx < 0) JsonNull else if(idx >= length) JsonNull else v(idx)
 		override def length: Int = v.length
@@ -168,7 +186,7 @@ package object kissjson
 		def apply(in: JsonValue[_]*) = new JsonArrayImpl(in.toVector)
 
 		def unapply(in: Any): Option[Vector[JsonValue[_]]] = in match {
-			case v: JsonArrayImpl => Some(v.v)
+			case v: MatchJsonArray => Some(v.v)
 			case _ => None
 		}
 	}
@@ -187,7 +205,7 @@ package object kissjson
 
 		def apply(): Builder[JsonValue[_], JsonArray] = new JsonArrayBuilder(source())
 		def apply(from: IndexedSeq[JsonValue[_]]): Builder[JsonValue[_], JsonArray] = from match {
-			case a: JsonArrayImpl => new JsonArrayBuilder(source(a.v))
+			case a: MatchJsonArray => new JsonArrayBuilder(source(a.v))
 			case _ => new JsonArrayBuilder(source(Vector()))
 		}
 	}
@@ -212,7 +230,7 @@ package object kissjson
 		
 				def apply(): Builder[T, JsonArray] = new JtJsonArrayBuilder(source())
 				def apply(from: IndexedSeq[JsonValue[_]]): Builder[T, JsonArray] = from match {
-					case a: JsonArrayImpl => new JtJsonArrayBuilder(source(a.v))
+					case a: MatchJsonArray => new JtJsonArrayBuilder(source(a.v))
 					case _ => new JtJsonArrayBuilder(source(Vector()))
 				}
 			}
@@ -234,16 +252,18 @@ package object kissjson
 // JsonObject
 ////////////////////////////////////////////////////////////////////////////////
 
-	type JsonObject = JsonValue[Map[String, JsonValue[_]]]
+	type JsonObject      = JsonValue[Map[String, JsonValue[_]]]
+	type MatchJsonObject = JsonObjectImpl
 
-	class JsonObjectImpl private[kissjson](internal: Map[String, JsonValue[_]]) extends JsonObject with Dynamic
+	final class JsonObjectImpl private[kissjson](internal: Map[String, JsonValue[_]]) extends JsonObject with Dynamic
 	{
 		private[kissjson] val v = internal.filterNot{case (_, v) => v == JsonNull}
 
 		override def toString: String = v.map{case (k, v) => s""""$k": "$v""""}.mkString("{", ", ", "}")
-		override def toJson: String   = v.map{case (k, v) => s""""${k.replaceAll("\"", "\\\"")}": ${v.toJson}"""}.mkString("{", ", ", "}")
 
 		override def selectDynamic(name: String): JsonValue[_] = v.get(name).getOrElse(JsonNull)
+
+		override def asMap():Map[String, JsonValue[_]] = v
 	}
 
 	object JsonObject
@@ -252,7 +272,7 @@ package object kissjson
 		def apply(value: Map[String, JsonValue[_]]):JsonObject = new JsonObjectImpl(value)
 
 		def unapply(in: Any): Option[Map[String, JsonValue[_]]] = in match {
-			case v: JsonObjectImpl => Some(v.v)
+			case v: MatchJsonObject => Some(v.v)
 			case _ => None
 		}
 	}
@@ -293,6 +313,8 @@ package object kissjson
 		@inline
 		def :=[U <% JsonValue[_]] (value: U): Tuple2[String, JsonValue[_]] = Tuple2(in, value)
 	}
+
+	implicit object compact extends CompactObjectRenderer
 
 }
 
