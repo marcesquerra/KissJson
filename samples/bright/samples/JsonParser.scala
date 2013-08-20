@@ -20,7 +20,7 @@ object JsonParser extends App
 			.getOrElse(throw new Exception("Invalid Json"))
 
 	// The Json Values are converted to their json representation
-	println(jsonObject.name + " " + jsonObject.surname)
+	println(jsonObject().name() + " " + jsonObject().surname())
 
 
 

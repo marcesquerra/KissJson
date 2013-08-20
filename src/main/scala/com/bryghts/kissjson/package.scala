@@ -15,10 +15,31 @@ package object kissjson
 
 	type MatchJsonValue = JsonValue[_]
 
-	sealed abstract class JsonValue[+T] extends IndexedSeq[JsonValue[_]] with Dynamic
+	trait DynamicAccessor extends Dynamic {
+		def selectDynamic(f: String): DynamicAccessor
+		def applyDynamic(f: String)(): JsonValue[_]
+	}
+
+	object NullAccessor extends DynamicAccessor
 	{
-		def selectDynamic(name: String): JsonValue[_] = JsonNull
-		def applyDynamic(name: String)(i: Int): JsonValue[_] = selectDynamic(name).apply(i)
+		def selectDynamic(f: String): DynamicAccessor = NullAccessor
+		def applyDynamic(f: String)(): JsonValue[_]   = JsonNull
+	}
+
+	class ObjectAccessor(data: JsonValue[_]) extends DynamicAccessor
+	{
+		def selectDynamic(f: String): DynamicAccessor = new ObjectAccessor(data.select(f))
+		def applyDynamic(f: String)(): JsonValue[_]   = data.select(f)
+	}
+
+	sealed abstract class JsonValue[+T] extends IndexedSeq[JsonValue[_]] //with Dynamic
+	{
+//		def selectDynamic(name: String): JsonValue[_] = JsonNull
+//		def applyDynamic(name: String)(i: Int): JsonValue[_] = selectDynamic(name).apply(i)
+
+		private[kissjson] def select(k: String): JsonValue[_] = JsonNull
+
+		def apply(): DynamicAccessor = NullAccessor
 
 		def toString: String
 		def render(implicit renderer: Renderer): String = renderer.render(this)
@@ -261,7 +282,11 @@ package object kissjson
 
 		override def toString: String = v.map{case (k, v) => s""""$k": "$v""""}.mkString("{", ", ", "}")
 
-		override def selectDynamic(name: String): JsonValue[_] = v.get(name).getOrElse(JsonNull)
+//		override def selectDynamic(name: String): JsonValue[_] = v.get(name).getOrElse(JsonNull)
+
+		override private[kissjson] def select(k: String): JsonValue[_] = v.get(k).getOrElse(JsonNull)
+
+		override def apply(): DynamicAccessor = new ObjectAccessor(this)
 
 		override def asMap():Map[String, JsonValue[_]] = v
 	}
