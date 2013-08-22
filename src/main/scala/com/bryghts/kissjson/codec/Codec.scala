@@ -28,21 +28,21 @@ package object codec
 	type CodecEnvironment = List[Coder]
 
 	implicit val codecEnvironment = 
-			SimpleTypeCoder[String]  (v => JsonString (v.toString))               ::
-			SimpleTypeCoder[Byte]    (v => JsonNumber (v.asInstanceOf[Byte]))     ::
-			SimpleTypeCoder[Short]   (v => JsonNumber (v.asInstanceOf[Short]))    ::
-			SimpleTypeCoder[Int]     (v => JsonNumber (v.asInstanceOf[Int]))      ::
-			SimpleTypeCoder[Long]    (v => JsonNumber (v.asInstanceOf[Long]))     ::
-			SimpleTypeCoder[Float]   (v => JsonNumber (v.asInstanceOf[Float]))    ::
-			SimpleTypeCoder[Double]  (v => JsonNumber (v.asInstanceOf[Double]))   ::
-			SimpleTypeCoder[Boolean] (v => JsonBoolean(v.asInstanceOf[Boolean]))  ::
-			CaseClassCodec                                                        ::
+			SimpleTypeCoder[String]  (v => JsonString (v))  ::
+			SimpleTypeCoder[Byte]    (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Short]   (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Int]     (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Long]    (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Float]   (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Double]  (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Boolean] (v => JsonBoolean(v))  ::
+			CaseClassCodec                                  ::
 			Nil
 
 	case class SimpleTypeCoder[T : TypeTag](f: T => JsonValue[_]) extends PublicCoder[T]
 	{
 		private[codec] def apply(v: Any, t: Type, env: CodecEnvironment): Option[JsonValue[_]] =
-			if(t == ru.typeOf[T])
+			if(t =:= ru.typeOf[T])
 				Some(f(v.asInstanceOf[T]))
 			else
 				None
