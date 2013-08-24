@@ -153,6 +153,7 @@ package object kissjson
 	{
 		def apply(value: IntegerNumber):  JsonInteger  = new JsonIntegerImpl(value)
 		def apply(value: RealNumber):     JsonReal     = new JsonRealImpl(value)
+		def apply(value: Number):         JsonNumber   = value match{case i: IntegerNumber => new JsonIntegerImpl(i) case r: RealNumber => new JsonRealImpl(r)}
 
 		def apply(value: Byte):           JsonInteger  = new JsonIntegerImpl(value)
 		def apply(value: Char):           JsonInteger  = new JsonIntegerImpl(value)

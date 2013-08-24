@@ -3,6 +3,9 @@ package com.bryghts.kissjson
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 import scala.annotation.tailrec
+import com.bryghts.kissnumber.IntegerNumber
+import com.bryghts.kissnumber.RealNumber
+import com.bryghts.kissnumber.Number
 
 
 package codec
@@ -28,15 +31,19 @@ package object codec
 	type CodecEnvironment = List[Coder]
 
 	implicit val codecEnvironment = 
-			SimpleTypeCoder[String]  (v => JsonString (v))  ::
-			SimpleTypeCoder[Byte]    (v => JsonNumber (v))  ::
-			SimpleTypeCoder[Short]   (v => JsonNumber (v))  ::
-			SimpleTypeCoder[Int]     (v => JsonNumber (v))  ::
-			SimpleTypeCoder[Long]    (v => JsonNumber (v))  ::
-			SimpleTypeCoder[Float]   (v => JsonNumber (v))  ::
-			SimpleTypeCoder[Double]  (v => JsonNumber (v))  ::
-			SimpleTypeCoder[Boolean] (v => JsonBoolean(v))  ::
-			CaseClassCodec                                  ::
+			SimpleTypeCoder[String]        (v => JsonString (v))  ::
+			SimpleTypeCoder[Byte]          (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Short]         (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Int]           (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Long]          (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Float]         (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Double]        (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Boolean]       (v => JsonBoolean(v))  ::
+			SimpleTypeCoder[IntegerNumber] (v => JsonNumber (v))  ::
+			SimpleTypeCoder[RealNumber]    (v => JsonNumber (v))  ::
+			SimpleTypeCoder[Number]        (v => JsonNumber (v))  ::
+			OptionCodec                                           ::
+			CaseClassCodec                                        ::
 			Nil
 
 	case class SimpleTypeCoder[T : TypeTag](f: T => JsonValue[_]) extends PublicCoder[T]
@@ -64,19 +71,31 @@ package object codec
 
 	def caseClassCodec[T <: Product](in: T)(implicit tt: TypeTag[T], env: CodecEnvironment) = CaseClassCodec(in, tt.tpe, env)
 
+	object OptionCodec extends Coder
+	{
+		private[codec] def apply(in: Any, t: Type, env: CodecEnvironment): Option[JsonValue[_]] =
+		{
+			if(t <:< ru.typeOf[Option[_]])
+			{
+				t match {
+					case pt: TypeRef =>
+						in match {
+							case Some(v) =>
+								doEncode(v, pt.args(0), env)
+							case None =>
+								Some(JsonNull)
+						}
+					case _ =>
+						None
+				}
+			}
+			else
+				None
+		}
+	}
 
 	object CaseClassCodec extends Coder
 	{
-
-		private val STRING  = ru.typeOf[String]
-		private val BYTE    = ru.typeOf[Byte]
-		private val SHORT   = ru.typeOf[Short]
-		private val INT     = ru.typeOf[Int]
-		private val LONG    = ru.typeOf[Long]
-		private val FLOAT   = ru.typeOf[Float]
-		private val DOUBLE  = ru.typeOf[Double]
-		private val BOOLEAN = ru.typeOf[Boolean]
-
 
 		private[codec] def apply(in: Any, t: Type, env: CodecEnvironment): Option[JsonValue[_]] = {
 
