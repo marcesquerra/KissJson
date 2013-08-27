@@ -9,6 +9,7 @@ import com.bryghts.kissjson.codec._
 import scala.reflect.runtime.universe.TypeTag
 import com.bryghts.kissnumber._
 import com.bryghts.kissjson.renderer._
+import scala.util.Try
 
 package object kissjson
 {
@@ -310,7 +311,7 @@ package object kissjson
 ////////////////////////////////////////////////////////////////////////////////
 
 	implicit class CaseClassToJsonConversor[T <: Product](val in: T)(implicit t: TypeTag[T]) {
-		def toJson:JsonValue[_] = caseClassCodec(in)(t, implicitly).getOrElse(JsonNull)
+		def toJson:Try[JsonValue[_]] = caseClassCodec(in)(t, implicitly)
 	}
 
 ////////////////////////////////////////////////////////////////////////////////

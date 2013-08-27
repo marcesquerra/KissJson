@@ -6,6 +6,10 @@ import scala.annotation.tailrec
 import com.bryghts.kissnumber.IntegerNumber
 import com.bryghts.kissnumber.RealNumber
 import com.bryghts.kissnumber.Number
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
+import scala.util.Failure
 
 
 package codec
@@ -13,11 +17,18 @@ package codec
 
 
 trait Coder {
-	private[codec] def apply(in: Any, t: Type, env: CodecEnvironment): Option[JsonValue[_]]
+	private[codec] final def apply(in: Any, t: Type, env: CodecEnvironment): Option[Try[JsonValue[_]]] =
+		if(canEncode(t))
+			Some(encode(in, t, env))
+		else
+			None
+
+	protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]]
+	private[codec] def canEncode(t: Type): Boolean
 }
 
 trait PublicCoder[T] extends Coder {
-	final def apply(in: T)(implicit tt: TypeTag[T], env: CodecEnvironment): Option[JsonValue[_]] = apply(in, tt.tpe, env)
+	final def apply(in: T)(implicit tt: TypeTag[T], env: CodecEnvironment): Option[Try[JsonValue[_]]] = apply(in, tt.tpe, env)
 }
 
 
@@ -43,87 +54,146 @@ package object codec
 			SimpleTypeCoder[RealNumber]    (v => JsonNumber (v))  ::
 			SimpleTypeCoder[Number]        (v => JsonNumber (v))  ::
 			OptionCodec                                           ::
+			ArrayCodec                                            ::
 			CaseClassCodec                                        ::
 			Nil
 
 	case class SimpleTypeCoder[T : TypeTag](f: T => JsonValue[_]) extends PublicCoder[T]
 	{
-		private[codec] def apply(v: Any, t: Type, env: CodecEnvironment): Option[JsonValue[_]] =
-			if(t =:= ru.typeOf[T])
-				Some(f(v.asInstanceOf[T]))
-			else
-				None
+		override protected def encode(v: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+				Success(f(v.asInstanceOf[T]))
+
+		override private[codec] def canEncode(t: Type): Boolean = t =:= ru.typeOf[T]
 	}
 
+	private def doEncode(v: Any, t: Type, env: CodecEnvironment): Option[Try[JsonValue[_]]] =
+		findEncoder(t, env).flatMap{c => c(v, t, env)}
+
 	@tailrec
-	private def doEncode(v: Any, t: Type, env: CodecEnvironment, encoders: CodecEnvironment): Option[JsonValue[_]] =
+	private def findEncoder(t: Type, encoders: CodecEnvironment): Option[Coder] =
 		if(encoders.isEmpty) None
 		else {
-			val h = encoders.head(v, t, env)
-
-			if(h.isEmpty)
-				doEncode(v, t, env, encoders.tail)
+			if(encoders.head.canEncode(t))
+				Some(encoders.head)
 			else
-				h
+				findEncoder(t, encoders.tail)
 		}
 
-	private def doEncode(v: Any, t: Type, env: CodecEnvironment): Option[JsonValue[_]] = doEncode(v, t, env, env)
+	def caseClassCodec[T <: Product](in: T)(implicit tt: TypeTag[T], env: CodecEnvironment): Try[JsonValue[_]] =
+		CaseClassCodec(in, tt.tpe, env).getOrElse(fail("There is no Codec capable of converting this object"))
 
-	def caseClassCodec[T <: Product](in: T)(implicit tt: TypeTag[T], env: CodecEnvironment) = CaseClassCodec(in, tt.tpe, env)
-
-	object OptionCodec extends Coder
+	object ArrayCodec extends Coder
 	{
-		private[codec] def apply(in: Any, t: Type, env: CodecEnvironment): Option[JsonValue[_]] =
+		protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
 		{
-			if(t <:< ru.typeOf[Option[_]])
-			{
 				t match {
 					case pt: TypeRef =>
 						in match {
-							case Some(v) =>
-								doEncode(v, pt.args(0), env)
+							case v: Array[_] =>
+								findEncoder(pt.args(0), env) match {
+									case Some(c) =>
+										val b: Try[Vector[JsonValue[_]]] = Success(Vector())
+
+										v.foldLeft(b) {
+											case (Success(accum), v) =>
+
+												def append(v: Vector[JsonValue[_]], a: JsonValue[_]): Vector[JsonValue[_]] = v :+ a
+
+												c(v, pt.args(0), env).map{_.map{append(accum, _)}}.getOrElse(fail(""))
+
+											case (Failure(t), v) => Failure(t)
+										}.map{JsonArray(_)}
+
+									case None =>
+										fail("_")
+								}
 							case None =>
-								Some(JsonNull)
+								fail(s"'$in' is not an Array")
 						}
 					case _ =>
-						None
+						fail("")
 				}
-			}
-			else
-				None
 		}
+
+		private[codec] def canEncode(t: Type): Boolean = t <:< ru.typeOf[Array[_]]
 	}
+
+	object OptionCodec extends Coder
+	{
+		override protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+		{
+			t match {
+				case pt: TypeRef =>
+					in match {
+						case Some(v) =>
+							doEncode(v, pt.args(0), env) getOrElse {fail("The Encoder has returned no value after saying it would")}
+						case None =>
+							Success(JsonNull)
+					}
+				case _ =>
+					fail("Not enough type information to recover the Option content")
+			}
+		}
+
+		override private[codec] def canEncode(t: Type): Boolean = t <:< ru.typeOf[Option[_]]
+	}
+
+	private def fail(msg: String) = Failure(new Exception(msg))
 
 	object CaseClassCodec extends Coder
 	{
 
-		private[codec] def apply(in: Any, t: Type, env: CodecEnvironment): Option[JsonValue[_]] = {
-
+		override protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+		{
 
 			val m = ru.runtimeMirror(in.getClass.getClassLoader)
 
-			if(!t.typeSymbol.asClass.isCaseClass)
-				return None
-
 			val ctor = t.declaration(ru.nme.CONSTRUCTOR).asMethod
 
-			if(ctor.paramss.length != 1)
-				return None
-
 			val im = m.reflect(in)(ClassTag(m.runtimeClass(t)))
-
-			Some(JsonObject(ctor.paramss(0).flatMap{p =>
+			val params = ctor.paramss.flatten.map{p =>
 				val n = p.name.decoded
 
 				val m:FieldMirror = im.reflectField(t.declaration(ru.newTermName(n)).asTerm)
 				val rt = m.symbol.asTerm.getter.asMethod.returnType
 				val v = m.get
 
-				doEncode(v, rt, env).map{(n -> _ :: Nil)}.getOrElse{Nil}
+				(n, rt, v)
+			}
 
-			}.toMap))
+			def encodeField(h: (String, Type, Any)): Option[Try[(String, JsonValue[_])]] = {
+				val (n, t, v) = h
+
+				doEncode(v, t, env) map {_.map{(n -> _)}}
+			}
+
+			def encodeFail[T](h: (String, Type, Any)): Failure[T] = {
+				val (n, t, v) = h
+
+				fail(s"The field '$n' of type '$t' and value '$v' can not be converted to Json")
+			}
+
+//			@tailrec
+			def encodeFields(params: List[(String, Type, Any)]): Try[List[(String, JsonValue[_])]] = {
+
+				if(params.isEmpty)
+					Success(Nil)
+				else {
+					encodeField(params.head) match {
+						case Some(Success(h)) => encodeFields(params.tail).map(h :: _)
+						case Some(Failure(t)) => Failure(t)
+						case None             => encodeFail(params.head)
+					}
+				}
+			}
+
+
+			encodeFields(params).map{fields => JsonObject(fields.toMap)}
 		}
 
+
+		override private[codec] def canEncode(t: Type): Boolean =
+			t.typeSymbol.asClass.isCaseClass
 	}
 
 }
