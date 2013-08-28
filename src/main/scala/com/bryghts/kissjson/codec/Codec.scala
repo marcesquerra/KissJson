@@ -55,6 +55,7 @@ package object codec
 			SimpleTypeCoder[Number]        (v => JsonNumber (v))  ::
 			OptionCodec                                           ::
 			ArrayCodec                                            ::
+			TraversableCodec                                      ::
 			CaseClassCodec                                        ::
 			Nil
 
@@ -116,6 +117,42 @@ package object codec
 		}
 
 		private[codec] def canEncode(t: Type): Boolean = t <:< ru.typeOf[Array[_]]
+	}
+
+	object TraversableCodec extends Coder
+	{
+		protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+		{
+				t match {
+					case pt: TypeRef =>
+						in match {
+							case v: Traversable[_] =>
+								findEncoder(pt.args(0), env) match {
+									case Some(c) =>
+										val b: Try[Vector[JsonValue[_]]] = Success(Vector())
+
+										v.foldLeft(b) {
+											case (Success(accum), v) =>
+
+												def append(v: Vector[JsonValue[_]], a: JsonValue[_]): Vector[JsonValue[_]] = v :+ a
+
+												c(v, pt.args(0), env).map{_.map{append(accum, _)}}.getOrElse(fail(""))
+
+											case (Failure(t), v) => Failure(t)
+										}.map{JsonArray(_)}
+
+									case None =>
+										fail("_")
+								}
+							case None =>
+								fail(s"'$in' is not an Array")
+						}
+					case _ =>
+						fail("")
+				}
+		}
+
+		private[codec] def canEncode(t: Type): Boolean = t <:< ru.typeOf[Traversable[_]]
 	}
 
 	object OptionCodec extends Coder
