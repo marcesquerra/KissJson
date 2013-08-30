@@ -14,24 +14,24 @@ import scala.util.Failure
 
 
 trait Coder {
-	private[codec] final def apply(in: Any, t: Type, env: CodecEnvironment): Option[Try[JsonValue[_]]] =
+	private[codec] final def apply(in: Any, t: Type, env: CoderEnvironment): Option[Try[JsonValue[_]]] =
 		if(canEncode(t))
 			Some(encode(in, t, env))
 		else
 			None
 
-	protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]]
+	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]]
 	private[codec] def canEncode(t: Type): Boolean
 }
 
 
 trait PublicCoder[T] extends Coder {
-	final def apply(in: T)(implicit tt: TypeTag[T], env: CodecEnvironment): Option[Try[JsonValue[_]]] = apply(in, tt.tpe, env)
+	final def apply(in: T)(implicit tt: TypeTag[T], env: CoderEnvironment): Option[Try[JsonValue[_]]] = apply(in, tt.tpe, env)
 }
 
 case class SimpleTypeCoder[T : TypeTag](f: T => JsonValue[_]) extends PublicCoder[T]
 {
-	override protected def encode(v: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+	override protected def encode(v: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
 			Success(f(v.asInstanceOf[T]))
 
 	override private[codec] def canEncode(t: Type): Boolean = t =:= typeOf[T]
@@ -40,7 +40,7 @@ case class SimpleTypeCoder[T : TypeTag](f: T => JsonValue[_]) extends PublicCode
 object CaseClassCodec extends Coder
 {
 
-	override protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+	override protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
 	{
 
 		val m = ru.runtimeMirror(in.getClass.getClassLoader)
@@ -95,7 +95,7 @@ object CaseClassCodec extends Coder
 
 object ArrayCodec extends Coder
 {
-	protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
 	{
 			t match {
 				case pt: TypeRef =>
@@ -131,7 +131,7 @@ object ArrayCodec extends Coder
 
 object TraversableCodec extends Coder
 {
-	protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
 	{
 			t match {
 				case pt: TypeRef =>
@@ -167,7 +167,7 @@ object TraversableCodec extends Coder
 
 object OptionCodec extends Coder
 {
-	override protected def encode(in: Any, t: Type, env: CodecEnvironment): Try[JsonValue[_]] =
+	override protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
 	{
 		t match {
 			case pt: TypeRef =>
