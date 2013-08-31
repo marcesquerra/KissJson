@@ -16,7 +16,7 @@ trait Renderer
 	def renderArray   (in: JsonArray,    out: StringBuilder): StringBuilder
 	def renderObject  (in: JsonObject,   out: StringBuilder): StringBuilder
 
-	final def render  (in: JsonValue[_], out: StringBuilder): StringBuilder = in match
+	final def render  (in: JsonValue, out: StringBuilder): StringBuilder = in match
 	{
 		case i: MatchJsonInteger => renderInteger (i, out)
 		case i: MatchJsonReal    => renderReal    (i, out)
@@ -37,7 +37,7 @@ trait Renderer
 	final def renderBoolean (in: JsonBoolean  ): String = renderBoolean (in, newBuilder).toString
 	final def renderArray   (in: JsonArray    ): String = renderArray   (in, newBuilder).toString
 	final def renderObject  (in: JsonObject   ): String = renderObject  (in, newBuilder).toString
-	final def render        (in: JsonValue[_] ): String = render        (in, newBuilder).toString
+	final def render        (in: JsonValue ): String = render        (in, newBuilder).toString
 
 }
 

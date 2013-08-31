@@ -33,7 +33,7 @@ package object codec
 	type CoderEnvironment = List[Coder]
 	type DeecoderEnvironment = List[Decoder[_]]
 
-	private[codec] def doEncode(v: Any, t: Type, env: CoderEnvironment): Option[Try[JsonValue[_]]] =
+	private[codec] def doEncode(v: Any, t: Type, env: CoderEnvironment): Option[Try[JsonValue]] =
 		findEncoder(t, env).flatMap{c => c(v, t, env)}
 
 	@tailrec
@@ -48,7 +48,7 @@ package object codec
 
 	private[codec] def fail(msg: String) = Failure(new Exception(msg))
 
-	def caseClassCodec[T <: Product](in: T)(implicit tt: TypeTag[T], env: CoderEnvironment): Try[JsonValue[_]] =
+	def caseClassCodec[T <: Product](in: T)(implicit tt: TypeTag[T], env: CoderEnvironment): Try[JsonValue] =
 		CaseClassCodec(in, tt.tpe, env).getOrElse(fail("There is no Codec capable of converting this object"))
 
 }

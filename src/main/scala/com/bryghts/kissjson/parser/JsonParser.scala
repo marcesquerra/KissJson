@@ -10,7 +10,7 @@ package kissjson.parser
 object JsonParser
 {
 
-	def apply(in: String): Option[JsonValue[_]] = {
+	def apply(in: String): Option[JsonValue] = {
 
 		val source = in.trim()
 
@@ -24,7 +24,7 @@ object JsonParser
 			parseObjectOrArray(s"[$source]").map{_(0)}
 	}
 
-	private def parseObjectOrArray(source: String): Option[JsonValue[_]] = {
+	private def parseObjectOrArray(source: String): Option[JsonValue] = {
 
 		JSON.globalNumberParser = in => try{JsonNumber(in.toLong)}catch{case t: NumberFormatException => JsonNumber(in.toDouble)}
 
@@ -32,7 +32,7 @@ object JsonParser
 
 	}
 
-	private def convert(in: Any): JsonValue[_] = in match {
+	private def convert(in: Any): JsonValue = in match {
 			case a: List    [Any]  => JsonArray   (a map convert)
 			case o: Map     [_, _] => JsonObject  (o map {case (k, v) => (k.asInstanceOf[String], convert(v))})
 			case b: Boolean        => JsonBoolean (b)

@@ -14,24 +14,24 @@ import scala.util.Failure
 
 
 trait Coder {
-	private[codec] final def apply(in: Any, t: Type, env: CoderEnvironment): Option[Try[JsonValue[_]]] =
+	private[codec] final def apply(in: Any, t: Type, env: CoderEnvironment): Option[Try[JsonValue]] =
 		if(canEncode(t))
 			Some(encode(in, t, env))
 		else
 			None
 
-	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]]
+	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue]
 	private[codec] def canEncode(t: Type): Boolean
 }
 
 
 trait PublicCoder[T] extends Coder {
-	final def apply(in: T)(implicit tt: TypeTag[T], env: CoderEnvironment): Option[Try[JsonValue[_]]] = apply(in, tt.tpe, env)
+	final def apply(in: T)(implicit tt: TypeTag[T], env: CoderEnvironment): Option[Try[JsonValue]] = apply(in, tt.tpe, env)
 }
 
-case class SimpleTypeCoder[T : TypeTag](f: T => JsonValue[_]) extends PublicCoder[T]
+case class SimpleTypeCoder[T : TypeTag](f: T => JsonValue) extends PublicCoder[T]
 {
-	override protected def encode(v: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
+	override protected def encode(v: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 			Success(f(v.asInstanceOf[T]))
 
 	override private[codec] def canEncode(t: Type): Boolean = t =:= typeOf[T]
@@ -40,7 +40,7 @@ case class SimpleTypeCoder[T : TypeTag](f: T => JsonValue[_]) extends PublicCode
 object CaseClassCodec extends Coder
 {
 
-	override protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
+	override protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 	{
 
 		val m = ru.runtimeMirror(in.getClass.getClassLoader)
@@ -58,7 +58,7 @@ object CaseClassCodec extends Coder
 			(n, rt, v)
 		}
 
-		def encodeField(h: (String, Type, Any)): Option[Try[(String, JsonValue[_])]] = {
+		def encodeField(h: (String, Type, Any)): Option[Try[(String, JsonValue)]] = {
 			val (n, t, v) = h
 
 			doEncode(v, t, env) map {_.map{(n -> _)}}
@@ -71,7 +71,7 @@ object CaseClassCodec extends Coder
 		}
 
 //		@tailrec
-		def encodeFields(params: List[(String, Type, Any)]): Try[List[(String, JsonValue[_])]] = {
+		def encodeFields(params: List[(String, Type, Any)]): Try[List[(String, JsonValue)]] = {
 
 			if(params.isEmpty)
 				Success(Nil)
@@ -95,7 +95,7 @@ object CaseClassCodec extends Coder
 
 object ArrayCodec extends Coder
 {
-	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
+	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 	{
 			t match {
 				case pt: TypeRef =>
@@ -103,12 +103,12 @@ object ArrayCodec extends Coder
 						case v: Array[_] =>
 							findEncoder(pt.args(0), env) match {
 								case Some(c) =>
-									val b: Try[Vector[JsonValue[_]]] = Success(Vector())
+									val b: Try[Vector[JsonValue]] = Success(Vector())
 
 									v.foldLeft(b) {
 										case (Success(accum), v) =>
 
-											def append(v: Vector[JsonValue[_]], a: JsonValue[_]): Vector[JsonValue[_]] = v :+ a
+											def append(v: Vector[JsonValue], a: JsonValue): Vector[JsonValue] = v :+ a
 
 											c(v, pt.args(0), env).map{_.map{append(accum, _)}}.getOrElse(fail(""))
 
@@ -131,7 +131,7 @@ object ArrayCodec extends Coder
 
 object TraversableCodec extends Coder
 {
-	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
+	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 	{
 			t match {
 				case pt: TypeRef =>
@@ -139,12 +139,12 @@ object TraversableCodec extends Coder
 						case v: Traversable[_] =>
 							findEncoder(pt.args(0), env) match {
 								case Some(c) =>
-									val b: Try[Vector[JsonValue[_]]] = Success(Vector())
+									val b: Try[Vector[JsonValue]] = Success(Vector())
 
 									v.foldLeft(b) {
 										case (Success(accum), v) =>
 
-											def append(v: Vector[JsonValue[_]], a: JsonValue[_]): Vector[JsonValue[_]] = v :+ a
+											def append(v: Vector[JsonValue], a: JsonValue): Vector[JsonValue] = v :+ a
 
 											c(v, pt.args(0), env).map{_.map{append(accum, _)}}.getOrElse(fail(""))
 
@@ -167,7 +167,7 @@ object TraversableCodec extends Coder
 
 object OptionCodec extends Coder
 {
-	override protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue[_]] =
+	override protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 	{
 		t match {
 			case pt: TypeRef =>
