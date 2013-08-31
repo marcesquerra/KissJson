@@ -57,7 +57,7 @@ package object kissjson
 
 		override def equals(in: Any) = in.isInstanceOf[JsonValue] && in.asInstanceOf[JsonValue].v == v
 
-		final def as[T](implicit d: Decoder[T], tt: TypeTag[T]): Option[T] = d.decode(this)
+		final def as[T](implicit d: Decoder[T], tt: TypeTag[T], env: DeecoderEnvironment): Option[T] = d.decode(this)
 	}
 
 
