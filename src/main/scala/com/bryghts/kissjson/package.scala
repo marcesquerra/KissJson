@@ -10,6 +10,7 @@ import scala.reflect.runtime.universe.TypeTag
 import com.bryghts.kissnumber._
 import com.bryghts.kissjson.renderer._
 import scala.util.Try
+import scala.util.Failure
 
 package object kissjson
 {
@@ -57,7 +58,10 @@ package object kissjson
 
 		override def equals(in: Any) = in.isInstanceOf[JsonValue] && in.asInstanceOf[JsonValue].v == v
 
-		final def as[T](implicit d: Decoder[T], tt: TypeTag[T], env: DeecoderEnvironment): Option[T] = d.decode(this)
+		final def as[T](implicit d: Decoder[T], tt: TypeTag[T], env: DeecoderEnvironment): Try[T] = d.decode(this) match {
+			case Some(r) => r
+			case None => Failure(new Exception("There is no available Decoder"))
+		}
 	}
 
 
