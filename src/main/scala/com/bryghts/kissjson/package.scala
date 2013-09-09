@@ -58,7 +58,7 @@ package object kissjson
 
 		override def equals(in: Any) = in.isInstanceOf[JsonValue] && in.asInstanceOf[JsonValue].v == v
 
-		final def as[T](implicit d: Decoder[T], tt: TypeTag[T], env: DeecoderEnvironment): Try[T] = d.decode(this) match {
+		final def as[T](implicit d: Decoder[T], tt: TypeTag[T], env: DecoderEnvironment): Try[T] = d.decode(this)(tt, env) match {
 			case Some(r) => r
 			case None => Failure(new Exception("There is no available Decoder"))
 		}
@@ -328,13 +328,13 @@ package object kissjson
 	implicit def implicitJson(in: String):  JsonString    = JsonString  (in)
 	implicit def implicitJson(in: Boolean): JsonBoolean   = JsonBoolean (in)
 	implicit def implicitJson(in: Null):    JsonNull.type = JsonNull
-	implicit def implicitJson(in: Byte):    JsonNumber    = JsonNumber  (in : IntegerNumber)
-	implicit def implicitJson(in: Char):    JsonNumber    = JsonNumber  (in : IntegerNumber)
-	implicit def implicitJson(in: Short):   JsonNumber    = JsonNumber  (in : IntegerNumber)
-	implicit def implicitJson(in: Int):     JsonNumber    = JsonNumber  (in : IntegerNumber)
-	implicit def implicitJson(in: Long):    JsonNumber    = JsonNumber  (in : IntegerNumber)
-	implicit def implicitJson(in: Float):   JsonNumber    = JsonNumber  (in : RealNumber)
-	implicit def implicitJson(in: Double):  JsonNumber    = JsonNumber  (in : RealNumber)
+	implicit def implicitJson(in: Byte):    JsonInteger   = JsonNumber  (in : IntegerNumber)
+	implicit def implicitJson(in: Char):    JsonInteger   = JsonNumber  (in : IntegerNumber)
+	implicit def implicitJson(in: Short):   JsonInteger   = JsonNumber  (in : IntegerNumber)
+	implicit def implicitJson(in: Int):     JsonInteger   = JsonNumber  (in : IntegerNumber)
+	implicit def implicitJson(in: Long):    JsonInteger   = JsonNumber  (in : IntegerNumber)
+	implicit def implicitJson(in: Float):   JsonReal      = JsonNumber  (in : RealNumber)
+	implicit def implicitJson(in: Double):  JsonReal      = JsonNumber  (in : RealNumber)
 
 	def J(in: JsonValue*)                = JsonArray(in:_*)
 	def J(in: (String, JsonValue)*)      = JsonObject(in:_*)
