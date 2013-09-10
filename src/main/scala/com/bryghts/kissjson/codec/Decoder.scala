@@ -36,6 +36,8 @@ case class SimpleDecoder[Source <: JsonValue : TypeTag, Target: TypeTag](validat
 object CaseClassDecoder extends Decoder[Product]
 {
 
+	private val m = runtimeMirror(getClass.getClassLoader)
+
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Product]] =
 		v match {
 			case jo: MatchJsonObject => doDecode(jo, t)
@@ -45,54 +47,34 @@ object CaseClassDecoder extends Decoder[Product]
 	private def doDecode(v: JsonObject, t: Type)(implicit env: DecoderEnvironment): Option[Try[Product]] =
 	{
 
-		???
-//		val m = runtimeMirror(v.getClass.getClassLoader)
-//
-//		val ctor = t.declaration(nme.CONSTRUCTOR).asMethod
-//
-//		val im = m.reflect(v)(ClassTag(m.runtimeClass(t)))
-//
-//		val params = ctor.paramss.flatten.map{p =>
-//			val n = p.name.decoded
+		val ctor = t.declaration(nme.CONSTRUCTOR).asMethod
+		val cm = m.reflectClass(t.typeSymbol.asClass)
+		val ctorm = cm.reflectConstructor(ctor)
+
+		val params = ctor.paramss.map{_.map{p =>
+			val n = p.name.decoded
+			val rt = p.typeSignature
 //
 //			val m:FieldMirror = im.reflectField(t.declaration(newTermName(n)).asTerm)
 //			val rt = m.symbol.asTerm.getter.asMethod.returnType
 //			val v = m.get
 //
-//			(n, rt, v)
-//		}
-//
-//		def encodeField(h: (String, Type, Any)): Option[Try[(String, JsonValue)]] = {
-//			val (n, t, v) = h
-//
-//			doEncode(v, t, env) map {_.map{(n -> _)}}
-//		}
-//
-//		def encodeFail[T](h: (String, Type, Any)): Failure[T] = {
-//			val (n, t, v) = h
-//
-//			fail(s"The field '$n' of type '$t' and value '$v' can not be converted to Json")
-//		}
-//
-////		@tailrec
-//		def encodeFields(params: List[(String, Type, Any)]): Try[List[(String, JsonValue)]] = {
-//
-//			if(params.isEmpty)
-//				Success(Nil)
-//			else {
-//				encodeField(params.head) match {
-//					case Some(Success(h)) => encodeFields(params.tail).map(h :: _)
-//					case Some(Failure(t)) => Failure(t)
-//					case None             => encodeFail(params.head)
-//				}
-//			}
-//		}
-//
-//
-//		encodeFields(params).map{fields => JsonObject(fields.toMap)}
+
+
+			val f = v.asMap.getOrElse(n, JsonNull)
+
+			(n, tryToDecode(f, rt, env, env))
+		}}
+
+		if(params.flatten.exists(f => f._2 == None || f._2.get.isFailure))
+			return Some(Failure(new Exception("")))
+
+		Some(Success(params.foldRight(ctorm: Any)
+		{case (pms, c) =>
+			type F[T] = {def apply(a: Any*): T}
+
+			c.asInstanceOf[F[_]].apply(pms.map{_._2.get.get} :_*)
+		}.asInstanceOf[Product]))
 	}
 
-
-//	override private[codec] def canEncode(t: Type): Boolean =
-//		t.typeSymbol.asClass.isCaseClass
 }

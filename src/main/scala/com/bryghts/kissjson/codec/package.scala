@@ -12,7 +12,7 @@ import com.bryghts.kissnumber.Number
 package object codec
 {
 
-	implicit val coderEnvironment: CoderEnvironment = 
+	implicit val coderEnvironment: CoderEnvironment =
 			SimpleTypeCoder[String]        (v => JsonString (v))  ::
 			SimpleTypeCoder[Byte]          (v => JsonNumber (v))  ::
 			SimpleTypeCoder[Short]         (v => JsonNumber (v))  ::
@@ -42,6 +42,8 @@ package object codec
 	implicit val numberDecoder         = SimpleDecoder[JsonNumber,  Number]        (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")))
 	implicit val booleanDecoder        = SimpleDecoder[JsonBoolean, Boolean]       (_.isInstanceOf[MatchJsonBoolean], _.asInstanceOf[JsonBoolean], _.getOrElse(throw new Exception("")))
 
+	implicit def caseClassDecoder[T <: Product]:Decoder[T] = CaseClassDecoder.asInstanceOf[Decoder[T]]
+
 	implicit val decoderEnvironment: DecoderEnvironment =
 			stringDecoder         ::
 			byteDecoder           ::
@@ -54,6 +56,7 @@ package object codec
 			integerNumberDecoder  ::
 			realNumberDecoder     ::
 			numberDecoder         ::
+			CaseClassDecoder      ::
 			Nil
 
 	type CoderEnvironment = List[Coder]
@@ -70,6 +73,18 @@ package object codec
 				Some(encoders.head)
 			else
 				findEncoder(t, encoders.tail)
+		}
+
+	@tailrec
+	private[codec] def tryToDecode(v: JsonValue, t: Type, env: DecoderEnvironment, decoders: DecoderEnvironment): Option[Try[_]] =
+		if(decoders.isEmpty) Some(Failure(new Exception("Could not found a decoder")))
+		else
+		{
+			decoders.head.decode(v)(implicitly, env) match
+			{
+				case Some(r) => Some(r)
+				case None    => tryToDecode(v, t, env, decoders.tail)
+			}
 		}
 
 	private[codec] def fail(msg: String) = Failure(new Exception(msg))
