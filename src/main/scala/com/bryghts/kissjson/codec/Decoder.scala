@@ -38,60 +38,61 @@ object CaseClassDecoder extends Decoder[Product]
 
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Product]] =
 		v match {
-			case jo: MatchJsonObject => decode(jo, t)
+			case jo: MatchJsonObject => doDecode(jo, t)
 			case _ => Some(Failure(new Exception("Invalid type of value")))
 		}
 
-	def decode(v: JsonObject, t: Type)(implicit env: DecoderEnvironment): Option[Try[Product]] =
+	private def doDecode(v: JsonObject, t: Type)(implicit env: DecoderEnvironment): Option[Try[Product]] =
 	{
 
-		val m = runtimeMirror(v.getClass.getClassLoader)
-
-		val ctor = t.declaration(nme.CONSTRUCTOR).asMethod
-
-		val im = m.reflect(v)(ClassTag(m.runtimeClass(t)))
-
-		val params = ctor.paramss.flatten.map{p =>
-			val n = p.name.decoded
-
-			val m:FieldMirror = im.reflectField(t.declaration(newTermName(n)).asTerm)
-			val rt = m.symbol.asTerm.getter.asMethod.returnType
-			val v = m.get
-
-			(n, rt, v)
-		}
-
-		def encodeField(h: (String, Type, Any)): Option[Try[(String, JsonValue)]] = {
-			val (n, t, v) = h
-
-			doEncode(v, t, env) map {_.map{(n -> _)}}
-		}
-
-		def encodeFail[T](h: (String, Type, Any)): Failure[T] = {
-			val (n, t, v) = h
-
-			fail(s"The field '$n' of type '$t' and value '$v' can not be converted to Json")
-		}
-
-//		@tailrec
-		def encodeFields(params: List[(String, Type, Any)]): Try[List[(String, JsonValue)]] = {
-
-			if(params.isEmpty)
-				Success(Nil)
-			else {
-				encodeField(params.head) match {
-					case Some(Success(h)) => encodeFields(params.tail).map(h :: _)
-					case Some(Failure(t)) => Failure(t)
-					case None             => encodeFail(params.head)
-				}
-			}
-		}
-
-
-		encodeFields(params).map{fields => JsonObject(fields.toMap)}
+		???
+//		val m = runtimeMirror(v.getClass.getClassLoader)
+//
+//		val ctor = t.declaration(nme.CONSTRUCTOR).asMethod
+//
+//		val im = m.reflect(v)(ClassTag(m.runtimeClass(t)))
+//
+//		val params = ctor.paramss.flatten.map{p =>
+//			val n = p.name.decoded
+//
+//			val m:FieldMirror = im.reflectField(t.declaration(newTermName(n)).asTerm)
+//			val rt = m.symbol.asTerm.getter.asMethod.returnType
+//			val v = m.get
+//
+//			(n, rt, v)
+//		}
+//
+//		def encodeField(h: (String, Type, Any)): Option[Try[(String, JsonValue)]] = {
+//			val (n, t, v) = h
+//
+//			doEncode(v, t, env) map {_.map{(n -> _)}}
+//		}
+//
+//		def encodeFail[T](h: (String, Type, Any)): Failure[T] = {
+//			val (n, t, v) = h
+//
+//			fail(s"The field '$n' of type '$t' and value '$v' can not be converted to Json")
+//		}
+//
+////		@tailrec
+//		def encodeFields(params: List[(String, Type, Any)]): Try[List[(String, JsonValue)]] = {
+//
+//			if(params.isEmpty)
+//				Success(Nil)
+//			else {
+//				encodeField(params.head) match {
+//					case Some(Success(h)) => encodeFields(params.tail).map(h :: _)
+//					case Some(Failure(t)) => Failure(t)
+//					case None             => encodeFail(params.head)
+//				}
+//			}
+//		}
+//
+//
+//		encodeFields(params).map{fields => JsonObject(fields.toMap)}
 	}
 
 
-	override private[codec] def canEncode(t: Type): Boolean =
-		t.typeSymbol.asClass.isCaseClass
+//	override private[codec] def canEncode(t: Type): Boolean =
+//		t.typeSymbol.asClass.isCaseClass
 }
