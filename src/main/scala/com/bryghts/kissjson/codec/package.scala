@@ -80,10 +80,11 @@ package object codec
 		if(decoders.isEmpty) Some(Failure(new Exception("Could not found a decoder")))
 		else
 		{
-			decoders.head.decode(v)(implicitly, env) match
+			decoders.head.decode(v, t)(env) match
 			{
 				case Some(r) => Some(r)
-				case None    => tryToDecode(v, t, env, decoders.tail)
+				case None    =>
+					tryToDecode(v, t, env, decoders.tail)
 			}
 		}
 

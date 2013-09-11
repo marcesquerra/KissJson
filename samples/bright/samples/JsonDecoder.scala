@@ -8,12 +8,27 @@ import scala.util.Failure
 object JsonDecoder extends App
 {
 
-	case class JsonMessage(msg: String)
+	case class JsonMessage(msg: String, age: Int)(val t: Boolean)
+	{
+		
+	}
 
 	val jsonString = J(
-			"msg" := "Hello World")
+			"msg" := "Hello World",
+			"age" := 3,
+			"t"   := true)
 
-	println(jsonString.as[JsonMessage])
+	jsonString.as[JsonMessage] match
+	{
+		case Success(msg) =>
+			println(msg)
+			println(msg.t)
+
+		case Failure(t) =>
+	}
+
+	println()
+	println()
 
 }
 

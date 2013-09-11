@@ -7,6 +7,8 @@ import scala.util.Success
 import scala.util.Failure
 import scala.reflect.ClassTag
 
+import scala.language.reflectiveCalls
+
 trait Decoder[T]
 {
 
@@ -22,6 +24,7 @@ case class SimpleDecoder[Source <: JsonValue : TypeTag, Target: TypeTag](validat
 {
 
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Target]] =
+	{
 		if(t <:< typeOf[Target])
 			if(validateJsonValue(v))
 				Some(Success(sourceToTarget(toSource(v))))
@@ -29,6 +32,7 @@ case class SimpleDecoder[Source <: JsonValue : TypeTag, Target: TypeTag](validat
 				Some(Failure(new Exception("Invalid type of value")))
 		else
 			None
+	}
 
 }
 
@@ -53,12 +57,7 @@ object CaseClassDecoder extends Decoder[Product]
 
 		val params = ctor.paramss.map{_.map{p =>
 			val n = p.name.decoded
-			val rt = p.typeSignature
-//
-//			val m:FieldMirror = im.reflectField(t.declaration(newTermName(n)).asTerm)
-//			val rt = m.symbol.asTerm.getter.asMethod.returnType
-//			val v = m.get
-//
+			val rt = p.typeSignatureIn(t)
 
 
 			val f = v.asMap.getOrElse(n, JsonNull)
@@ -69,12 +68,8 @@ object CaseClassDecoder extends Decoder[Product]
 		if(params.flatten.exists(f => f._2 == None || f._2.get.isFailure))
 			return Some(Failure(new Exception("")))
 
-		Some(Success(params.foldRight(ctorm: Any)
-		{case (pms, c) =>
-			type F[T] = {def apply(a: Any*): T}
+		Some(Success(ctorm(params.flatten.map{_._2.get.get} :_*).asInstanceOf[Product]))
 
-			c.asInstanceOf[F[_]].apply(pms.map{_._2.get.get} :_*)
-		}.asInstanceOf[Product]))
 	}
 
 }
