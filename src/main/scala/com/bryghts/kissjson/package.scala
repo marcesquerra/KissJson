@@ -346,6 +346,9 @@ package object kissjson
 
 		@inline
 		def :=[U <% JsonValue] (value: U): Tuple2[String, JsonValue] = Tuple2(in, value)
+
+		@inline
+		def := (value: Null): Tuple2[String, JsonValue] = Tuple2(in, JsonNull)
 	}
 
 	implicit object compact extends CompactObjectRenderer

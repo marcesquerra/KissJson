@@ -8,6 +8,7 @@ import scala.util.Failure
 import com.bryghts.kissnumber.IntegerNumber
 import com.bryghts.kissnumber.RealNumber
 import com.bryghts.kissnumber.Number
+import scala.reflect.ClassTag
 
 package object codec
 {
@@ -43,6 +44,8 @@ package object codec
 	implicit val booleanDecoder        = SimpleDecoder[JsonBoolean, Boolean]       (_.isInstanceOf[MatchJsonBoolean], _.asInstanceOf[JsonBoolean], _.getOrElse(throw new Exception("")))
 
 	implicit def caseClassDecoder[T <: Product]:Decoder[T] = CaseClassDecoder.asInstanceOf[Decoder[T]]
+	implicit def arrayDecoder[T : Decoder: TypeTag : ClassTag]: Decoder[Array[T]] = ArrayDecoder[T]
+	implicit def optionDecoder[T : Decoder: TypeTag]: Decoder[Option[T]] = OptionDecoder[T]
 
 	implicit val decoderEnvironment: DecoderEnvironment =
 			stringDecoder         ::
@@ -56,6 +59,8 @@ package object codec
 			integerNumberDecoder  ::
 			realNumberDecoder     ::
 			numberDecoder         ::
+			GenericArrayDecoder   ::
+			GenericOptionDecoder  ::
 			CaseClassDecoder      ::
 			Nil
 

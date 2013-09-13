@@ -52,9 +52,9 @@ case class OptionDecoder[T](implicit internalDecoder: Decoder[T], it: TypeTag[T]
 		if(v == JsonNull) Some(Success(None))
 		else
 			internalDecoder.decode(v, typeOf[T])(env) match {
-				case None => None
-				case Some(Failure(t)) => Some(Failure(t))
-				case Some(Success(r)) => Some(Success(Some(r)))
+				case None              => None
+				case Some(Failure(t))  => Some(Failure(t))
+				case Some(Success(r))  => Some(Success(Some(r)))
 			}
 
 }
@@ -64,13 +64,23 @@ object GenericOptionDecoder extends Decoder[Option[_]]
 
 
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Option[Any]]] =
-		if(v == JsonNull) Some(Success(None))
-		else
-			tryToDecode(v, subType(t), env, env) match {
-				case None => None
-				case Some(Failure(t)) => Some(Failure(t))
-				case Some(Success(r)) => Some(Success(Some(r)))
+		if(t <:< typeOf[Option[_]])
+		{
+			if(v == JsonNull) Some(Success(None))
+			else
+			{
+				val d = tryToDecode(v, subType(t), env, env)
+		
+				println(d)
+		
+				d match {
+					case None => None
+					case Some(Failure(t)) => Some(Failure(t))
+					case Some(Success(r)) => Some(Success(Some(r)))
+				}
 			}
+		}
+		else None
 }
 
 case class ArrayDecoder[T](implicit internalDecoder: Decoder[T], it: TypeTag[T], ct: ClassTag[T]) extends Decoder[Array[T]]
@@ -99,17 +109,20 @@ object GenericArrayDecoder extends Decoder[Array[_]]
 	val ad = ArrayDecoder[Int]
 
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[_]]] =
-		Some(v.toList.map{tryToDecode(_, subType(t), env, env)}.foldLeft(Success(Array[Any]()): Try[Array[_]]){(t, b) =>
-			t match {
-				case Failure(t) => Failure(t)
-				case Success(a) =>
-					b match {
-						case None => Failure(new Exception("No Decoder found"))
-						case Some(Failure(t)) => Failure(t)
-						case Some(Success(r)) => Success(a ++ Array(r))
-					}
-			}
-		})
+		if(t <:< typeOf[Array[_]])
+			Some(v.toList.map{tryToDecode(_, subType(t), env, env)}.foldLeft(Success(Array[Any]()): Try[Array[_]]){(t, b) =>
+				t match {
+					case Failure(t) => Failure(t)
+					case Success(a) =>
+						b match {
+							case None => Failure(new Exception("No Decoder found"))
+							case Some(Failure(t)) => Failure(t)
+							case Some(Success(r)) => Success(a ++ Array(r))
+						}
+				}
+			})
+		else
+			None
 
 //	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Option[Any]]] =
 //		if(v == JsonNull) Some(Success(None))
