@@ -43,26 +43,27 @@ package object codec
 	implicit val numberDecoder         = SimpleDecoder[JsonNumber,  Number]        (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")))
 	implicit val booleanDecoder        = SimpleDecoder[JsonBoolean, Boolean]       (_.isInstanceOf[MatchJsonBoolean], _.asInstanceOf[JsonBoolean], _.getOrElse(throw new Exception("")))
 
-	implicit def collectionDecoder[T : Decoder: TypeTag, C <: Traversable[T] : TypeTag]: Decoder[C] = TraversableDecoder[T, C]
+//	implicit def collectionDecoder[T : Decoder: TypeTag, C <: Traversable[T] : TypeTag]: Decoder[C] = TraversableDecoder[T, C]
 	implicit def caseClassDecoder[T <: Product]:Decoder[T] = CaseClassDecoder.asInstanceOf[Decoder[T]]
 	implicit def arrayDecoder[T : Decoder: TypeTag : ClassTag]: Decoder[Array[T]] = ArrayDecoder[T]
 	implicit def optionDecoder[T : Decoder: TypeTag]: Decoder[Option[T]] = OptionDecoder[T]
 
 	implicit val decoderEnvironment: DecoderEnvironment =
-			stringDecoder         ::
-			byteDecoder           ::
-			shortDecoder          ::
-			intDecoder            ::
-			longDecoder           ::
-			floatDecoder          ::
-			doubleDecoder         ::
-			booleanDecoder        ::
-			integerNumberDecoder  ::
-			realNumberDecoder     ::
-			numberDecoder         ::
-			GenericArrayDecoder   ::
-			GenericOptionDecoder  ::
-			CaseClassDecoder      ::
+			stringDecoder             ::
+			byteDecoder               ::
+			shortDecoder              ::
+			intDecoder                ::
+			longDecoder               ::
+			floatDecoder              ::
+			doubleDecoder             ::
+			booleanDecoder            ::
+			integerNumberDecoder      ::
+			realNumberDecoder         ::
+			numberDecoder             ::
+			GenericArrayDecoder       ::
+			GenericTraversableDecoder ::
+			GenericOptionDecoder      ::
+			CaseClassDecoder          ::
 			Nil
 
 	type CoderEnvironment = List[Coder]
@@ -81,18 +82,6 @@ package object codec
 				findEncoder(t, encoders.tail)
 		}
 
-	@tailrec
-	private[codec] def tryToDecode(v: JsonValue, t: Type, env: DecoderEnvironment, decoders: DecoderEnvironment): Option[Try[_]] =
-		if(decoders.isEmpty) Some(Failure(new Exception("Could not found a decoder")))
-		else
-		{
-			decoders.head.decode(v, t)(env) match
-			{
-				case Some(r) => Some(r)
-				case None    =>
-					tryToDecode(v, t, env, decoders.tail)
-			}
-		}
 
 	private[codec] def fail(msg: String) = Failure(new Exception(msg))
 

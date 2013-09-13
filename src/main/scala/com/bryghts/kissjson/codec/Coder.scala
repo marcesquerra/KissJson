@@ -79,7 +79,7 @@ object CaseClassCodec extends Coder
 				encodeField(params.head) match {
 					case Some(Success(h)) => encodeFields(params.tail).map(h :: _)
 					case Some(Failure(t)) => Failure(t)
-					case None             => encodeFail(params.head)
+					case _                => encodeFail(params.head)
 				}
 			}
 		}
@@ -97,33 +97,29 @@ object ArrayCodec extends Coder
 {
 	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 	{
-			t match {
-				case pt: TypeRef =>
-					in match {
-						case v: Array[_] =>
-							findEncoder(pt.args(0), env) match {
-								case Some(c) =>
-									val b: Try[Vector[JsonValue]] = Success(Vector())
+		val pt = t.asInstanceOf[TypeRef]
+				in match {
+					case v: Array[_] =>
+						findEncoder(pt.args(0), env) match {
+							case Some(c) =>
+								val b: Try[Vector[JsonValue]] = Success(Vector())
 
-									v.foldLeft(b) {
-										case (Success(accum), v) =>
+								v.foldLeft(b) {
+									case (Success(accum), v) =>
 
-											def append(v: Vector[JsonValue], a: JsonValue): Vector[JsonValue] = v :+ a
+										def append(v: Vector[JsonValue], a: JsonValue): Vector[JsonValue] = v :+ a
 
-											c(v, pt.args(0), env).map{_.map{append(accum, _)}}.getOrElse(fail(""))
+										c(v, pt.args(0), env).map{_.map{append(accum, _)}}.getOrElse(fail(""))
 
-										case (Failure(t), v) => Failure(t)
-									}.map{JsonArray(_)}
+									case (Failure(t), v) => Failure(t)
+								}.map{JsonArray(_)}
 
-								case None =>
-									fail("_")
-							}
-						case None =>
-							fail(s"'$in' is not an Array")
-					}
-				case _ =>
-					fail("")
-			}
+							case _ =>
+								fail("_")
+						}
+					case _ =>
+						fail(s"'$in' is not an Array")
+				}
 	}
 
 	private[codec] def canEncode(t: Type): Boolean = t <:< ru.typeOf[Array[_]]
@@ -133,8 +129,7 @@ object TraversableCodec extends Coder
 {
 	protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 	{
-			t match {
-				case pt: TypeRef =>
+		val pt = t.asInstanceOf[TypeRef]
 					in match {
 						case v: Traversable[_] =>
 							findEncoder(pt.args(0), env) match {
@@ -151,15 +146,12 @@ object TraversableCodec extends Coder
 										case (Failure(t), v) => Failure(t)
 									}.map{JsonArray(_)}
 
-								case None =>
+								case _ =>
 									fail("_")
 							}
-						case None =>
+						case _ =>
 							fail(s"'$in' is not an Array")
 					}
-				case _ =>
-					fail("")
-			}
 	}
 
 	private[codec] def canEncode(t: Type): Boolean = t <:< ru.typeOf[Traversable[_]]
@@ -169,16 +161,12 @@ object OptionCodec extends Coder
 {
 	override protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 	{
-		t match {
-			case pt: TypeRef =>
-				in match {
-					case Some(v) =>
-						doEncode(v, pt.args(0), env) getOrElse {fail("The Encoder has returned no value after saying it would")}
-					case None =>
-						Success(JsonNull)
-				}
+		val pt = t.asInstanceOf[TypeRef]
+		in match {
+			case Some(v) =>
+				doEncode(v, pt.args(0), env) getOrElse {fail("The Encoder has returned no value after saying it would")}
 			case _ =>
-				fail("Not enough type information to recover the Option content")
+				Success(JsonNull)
 		}
 	}
 

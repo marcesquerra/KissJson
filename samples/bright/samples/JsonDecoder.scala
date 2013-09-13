@@ -17,15 +17,15 @@ object JsonDecoder extends App
 			'eMail := "ABC",
 			'abc   := J(J(1, 2), null, J(3)))
 
-	jsonString.as[JsonMessage] match
-	{
-		case Success(msg) =>
-			println(msg)
-			println(msg.abc.map{_.getOrElse(Set())}.flatten.mkString(", "))
-
-		case Failure(t) =>
-			println(t)
-	}
+//	jsonString.as[JsonMessage] match
+//	{
+//		case Success(msg) =>
+//			println(msg)
+//			println(msg.abc.map{_.getOrElse(Set())}.flatten.mkString(", "))
+//
+//		case Failure(t) =>
+//			println(t)
+//	}
 
 //	val a = J(1, 2, 3)
 //

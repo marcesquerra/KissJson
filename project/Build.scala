@@ -9,7 +9,8 @@ object BuildSettings
 			version      := "0.0.1-SNAPSHOT",
 			scalaVersion := "2.10.2",
 			scalacOptions ++= Seq(),
-			libraryDependencies += "com.bryghts.kissnumber" % "kissnumber_2.10" % "0.0.1"
+			libraryDependencies += "com.bryghts.kissnumber" % "kissnumber_2.10" % "0.0.1",
+			libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.11.0-M4"
 	)
 
 }

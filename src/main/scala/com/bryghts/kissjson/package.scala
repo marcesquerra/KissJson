@@ -58,10 +58,10 @@ package object kissjson
 
 		override def equals(in: Any) = in.isInstanceOf[JsonValue] && in.asInstanceOf[JsonValue].v == v
 
-		final def as[T](implicit d: Decoder[T], tt: TypeTag[T], env: DecoderEnvironment): Try[T] = d.decode(this)(tt, env) match {
-			case Some(r) => r
-			case None => Failure(new Exception("There is no available Decoder"))
-		}
+//		final def as[T](implicit d: Decoder[T], tt: TypeTag[T], env: DecoderEnvironment): Try[T] = d.decode(this)(tt, env) match {
+//			case Some(r) => r
+//			case None => Failure(new Exception("There is no available Decoder"))
+//		}
 	}
 
 
@@ -231,7 +231,8 @@ package object kissjson
 
 	implicit object CanBuildJsonArray extends CanBuildFrom[IndexedSeq[JsonValue],JsonValue,JsonArray]
 	{
-		private val source: CanBuildFrom[Vector[JsonValue], JsonValue, Vector[JsonValue]] = implicitly
+		private def s(implicit cbf: CanBuildFrom[Vector[JsonValue], JsonValue, Vector[JsonValue]]) = cbf
+		private val source = s
 
 		def apply(): Builder[JsonValue, JsonArray] = new JsonArrayBuilder(source())
 		def apply(from: IndexedSeq[JsonValue]): Builder[JsonValue, JsonArray] = from match {
