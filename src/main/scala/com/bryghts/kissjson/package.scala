@@ -249,7 +249,7 @@ package object kissjson
 			class JtJsonArrayBuilder(source: Builder[JT, Vector[JT]]) extends Builder[T, JsonArray]
 			{self =>
 				def +=(elem: T) = new JtJsonArrayBuilder(source += b(elem)).asInstanceOf[self.type]
-		
+
 				def clear(): Unit = source.clear
 				def result(): JsonArray = JsonArray(source.result())
 			}
@@ -257,7 +257,7 @@ package object kissjson
 			new CanBuildFrom[IndexedSeq[JsonValue],T,JsonArray]
 			{
 				private val source: CanBuildFrom[Vector[JsonValue], JT, Vector[JT]] = implicitly
-		
+
 				def apply(): Builder[T, JsonArray] = new JtJsonArrayBuilder(source())
 				def apply(from: IndexedSeq[JsonValue]): Builder[T, JsonArray] = from match {
 					case a: MatchJsonArray => new JtJsonArrayBuilder(source(a.v))
@@ -266,7 +266,7 @@ package object kissjson
 			}
 	}
 
-	
+
 	implicit val CanBuildJsonArrayFromStrings  = CreateBuilder[String,  JsonString]  (JsonString  (_))
 	implicit val CanBuildJsonArrayFromBooleans = CreateBuilder[Boolean, JsonBoolean] (JsonBoolean (_))
 	implicit val CanBuildJsonArrayFromLongs    = CreateBuilder[Long,    JsonInteger] (JsonNumber  (_))
@@ -349,6 +349,15 @@ package object kissjson
 
 		@inline
 		def := (value: Null): Tuple2[String, JsonValue] = Tuple2(in, JsonNull)
+	}
+
+	implicit class SymbolJsonExtensions(val in: Symbol) extends AnyVal
+	{
+		@inline
+		def :=[U <% JsonValue] (value: U): Tuple2[String, JsonValue] = Tuple2(in.name, value)
+
+		@inline
+		def := (value: Null): Tuple2[String, JsonValue] = Tuple2(in.name, JsonNull)
 	}
 
 	implicit object compact extends CompactObjectRenderer

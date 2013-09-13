@@ -12,6 +12,20 @@ import scala.language.reflectiveCalls
 trait Decoder[T]
 {
 
+	private[codec] val m = runtimeMirror(getClass.getClassLoader)
+	private[codec] def classTag[T](t: Type): ClassTag[T] = {
+		val rtc = m.runtimeClass(t)
+		ClassTag(rtc)
+	}
+
+	private[codec] def genArray(t: Type, n: Int): Array[_] =
+	{
+		val st  = subType(t)
+		val rtc = m.runtimeClass(st)
+		val r   = java.lang.reflect.Array.newInstance(rtc, n)
+		r.asInstanceOf[Array[_]]
+	}
+
 	private[codec] def subType(t: Type) =
 			t match
 			{
@@ -66,13 +80,13 @@ object GenericOptionDecoder extends Decoder[Option[_]]
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Option[Any]]] =
 		if(t <:< typeOf[Option[_]])
 		{
-			if(v == JsonNull) Some(Success(None))
+			if(v == JsonNull || v == null) Some(Success(None))
 			else
 			{
 				val d = tryToDecode(v, subType(t), env, env)
-		
+
 				println(d)
-		
+
 				d match {
 					case None => None
 					case Some(Failure(t)) => Some(Failure(t))
@@ -86,43 +100,60 @@ object GenericOptionDecoder extends Decoder[Option[_]]
 case class ArrayDecoder[T](implicit internalDecoder: Decoder[T], it: TypeTag[T], ct: ClassTag[T]) extends Decoder[Array[T]]
 {
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[T]]] =
-		decodeInternal(v)
+	{
+		if(t <:< typeOf[Array[_]])
+		{
+			val r: Array[T] = new Array[T](v.length)
 
-	def decodeInternal(v: JsonValue)(implicit env: DecoderEnvironment): Option[Try[Array[T]]] =
-		Some(v.toList.map{internalDecoder.decode(_, typeOf[T])(env)}.foldLeft(Success(Array[T]()): Try[Array[T]]){(t, b) =>
-			t match {
-				case Failure(t) => Failure(t)
-				case Success(a) =>
-					b match {
-						case None => Failure(new Exception("No Decoder found"))
-						case Some(Failure(t)) => Failure(t)
-						case Some(Success(r)) => Success(a ++ Array(r))
-					}
+			v.toList.map{tryToDecode(_, it.tpe, env, env)}.zipWithIndex.foreach{case (b, i) =>
+					r(i) =
+						b match {
+							case None => return Some(Failure(new Exception("No Decoder found")))
+							case Some(Failure(t)) =>
+								println("Here!!!")
+								return Some(Failure(t))
+							case Some(Success(p)) =>
+								p.asInstanceOf[T]
+						}
 			}
-		})
+			println(r)
+			Some(Success(r))
+		}
+		else
+			None
+	}
 
 }
 
 object GenericArrayDecoder extends Decoder[Array[_]]
 {
 
-	val ad = ArrayDecoder[Int]
-
-	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[_]]] =
+	private def doDecode[T](v: JsonValue, t: Type)(implicit env: DecoderEnvironment, ct: ClassTag[T]): Option[Try[Array[_]]] =
+	{
 		if(t <:< typeOf[Array[_]])
-			Some(v.toList.map{tryToDecode(_, subType(t), env, env)}.foldLeft(Success(Array[Any]()): Try[Array[_]]){(t, b) =>
-				t match {
-					case Failure(t) => Failure(t)
-					case Success(a) =>
+		{
+			val r: Array[T] = new Array[T](v.length)
+
+			v.toList.map{tryToDecode(_, subType(t), env, env)}.zipWithIndex.foreach{case (b, i) =>
+					r(i) =
 						b match {
-							case None => Failure(new Exception("No Decoder found"))
-							case Some(Failure(t)) => Failure(t)
-							case Some(Success(r)) => Success(a ++ Array(r))
+							case None => return Some(Failure(new Exception("No Decoder found")))
+							case Some(Failure(t)) =>
+								println("Here!!!")
+								return Some(Failure(t))
+							case Some(Success(p)) =>
+								p.asInstanceOf[T]
 						}
-				}
-			})
+			}
+			println(r)
+			Some(Success(r))
+		}
 		else
 			None
+	}
+
+	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[_]]] =
+			doDecode(v, t)(env, classTag(subType(t)))
 
 //	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Option[Any]]] =
 //		if(v == JsonNull) Some(Success(None))
@@ -136,8 +167,6 @@ object GenericArrayDecoder extends Decoder[Array[_]]
 
 object CaseClassDecoder extends Decoder[Product]
 {
-
-	private val m = runtimeMirror(getClass.getClassLoader)
 
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Product]] =
 		v match {
