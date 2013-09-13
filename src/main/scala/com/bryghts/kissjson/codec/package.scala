@@ -43,6 +43,7 @@ package object codec
 	implicit val numberDecoder         = SimpleDecoder[JsonNumber,  Number]        (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")))
 	implicit val booleanDecoder        = SimpleDecoder[JsonBoolean, Boolean]       (_.isInstanceOf[MatchJsonBoolean], _.asInstanceOf[JsonBoolean], _.getOrElse(throw new Exception("")))
 
+	implicit def collectionDecoder[T : Decoder: TypeTag, C <: Traversable[T] : TypeTag]: Decoder[C] = TraversableDecoder[T, C]
 	implicit def caseClassDecoder[T <: Product]:Decoder[T] = CaseClassDecoder.asInstanceOf[Decoder[T]]
 	implicit def arrayDecoder[T : Decoder: TypeTag : ClassTag]: Decoder[Array[T]] = ArrayDecoder[T]
 	implicit def optionDecoder[T : Decoder: TypeTag]: Decoder[Option[T]] = OptionDecoder[T]
