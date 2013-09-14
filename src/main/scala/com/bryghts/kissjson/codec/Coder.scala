@@ -13,7 +13,9 @@ import scala.reflect.ClassTag
 import scala.util.Failure
 
 
-trait Coder {
+trait Coder
+{
+
 	private[codec] final def apply(in: Any, t: Type, env: CoderEnvironment): Option[Try[JsonValue]] =
 		if(canEncode(t))
 			Some(encode(in, t, env))
@@ -25,7 +27,8 @@ trait Coder {
 }
 
 
-trait PublicCoder[T] extends Coder {
+trait PublicCoder[T] extends Coder
+{
 	final def apply(in: T)(implicit tt: TypeTag[T], env: CoderEnvironment): Option[Try[JsonValue]] = apply(in, tt.tpe, env)
 }
 
@@ -61,7 +64,7 @@ object CaseClassCodec extends Coder
 		def encodeField(h: (String, Type, Any)): Option[Try[(String, JsonValue)]] = {
 			val (n, t, v) = h
 
-			doEncode(v, t, env) map {_.map{(n -> _)}}
+			tryToEncode(v, t, env) map {_.map{(n -> _)}}
 		}
 
 		def encodeFail[T](h: (String, Type, Any)): Failure[T] = {
@@ -164,7 +167,7 @@ object OptionCodec extends Coder
 		val pt = t.asInstanceOf[TypeRef]
 		in match {
 			case Some(v) =>
-				doEncode(v, pt.args(0), env) getOrElse {fail("The Encoder has returned no value after saying it would")}
+				tryToEncode(v, pt.args(0), env) getOrElse {fail("The Encoder has returned no value after saying it would")}
 			case _ =>
 				Success(JsonNull)
 		}

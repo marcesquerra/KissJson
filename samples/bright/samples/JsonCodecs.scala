@@ -11,7 +11,7 @@ object JsonCodecs extends App
 	case class Person(name: String, age: Number, company: Company)
 
 	println(Person("Jhon", 42, Company("Science of Deduction", Some("jhon@deduction.com") :: None :: Some("aaaa@b.c") :: Some("a23@b.c") :: Nil, Some("123")))
-		.toJson
+		.asJson
 		.map(_.render)
 		.recover{case t => s"Invalid conversion due to $t"}
 		.get

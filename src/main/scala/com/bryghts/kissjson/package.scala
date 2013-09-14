@@ -11,6 +11,9 @@ import com.bryghts.kissnumber._
 import com.bryghts.kissjson.renderer._
 import scala.util.Try
 import scala.util.Failure
+import com.bryghts.safedynamic.SafeDynamic
+import com.bryghts.safedynamic.ApplyAfterSafeDynamic
+import com.bryghts.safedynamic.HasApply
 
 package object kissjson
 {
@@ -18,31 +21,11 @@ package object kissjson
 	type JsonValue      = JsonValueBase[_]
 	type MatchJsonValue = JsonValueBase[_]
 
-	trait DynamicAccessor extends Dynamic {
-		def selectDynamic(f: String): DynamicAccessor
-		def applyDynamic(f: String)(): JsonValue
-	}
-
-	object NullAccessor extends DynamicAccessor
+	sealed abstract class JsonValueBase[+T] extends IndexedSeq[JsonValue] with SafeDynamic[JsonValue] with ApplyAfterSafeDynamic[Int, JsonValue, JsonValue] with HasApply[Int, JsonValue]
 	{
-		def selectDynamic(f: String): DynamicAccessor = NullAccessor
-		def applyDynamic(f: String)(): JsonValue   = JsonNull
-	}
-
-	class ObjectAccessor(data: JsonValue) extends DynamicAccessor
-	{
-		def selectDynamic(f: String): DynamicAccessor = new ObjectAccessor(data.select(f))
-		def applyDynamic(f: String)(): JsonValue   = data.select(f)
-	}
-
-	sealed abstract class JsonValueBase[+T] extends IndexedSeq[JsonValue] //with Dynamic
-	{
-//		def selectDynamic(name: String): JsonValue = JsonNull
-//		def applyDynamic(name: String)(i: Int): JsonValue = selectDynamic(name).apply(i)
+		def selectDynamic(name: String): JsonValue = JsonNull
 
 		private[kissjson] def select(k: String): JsonValue = JsonNull
-
-		def apply(): DynamicAccessor = NullAccessor
 
 		def toString: String
 		def render(implicit renderer: Renderer): String = renderer.render(this)
@@ -58,10 +41,10 @@ package object kissjson
 
 		override def equals(in: Any) = in.isInstanceOf[JsonValue] && in.asInstanceOf[JsonValue].v == v
 
-//		final def as[T](implicit d: Decoder[T], tt: TypeTag[T], env: DecoderEnvironment): Try[T] = d.decode(this)(tt, env) match {
-//			case Some(r) => r
-//			case None => Failure(new Exception("There is no available Decoder"))
-//		}
+		final def as[T](implicit tt: TypeTag[T], env: DecoderEnvironment): Try[T] = tryToDecode(this, tt.tpe, env) match {
+			case Some(r) => r.asInstanceOf[Try[T]]
+			case None => Failure(new Exception("There is no available Decoder"))
+		}
 	}
 
 
@@ -286,17 +269,15 @@ package object kissjson
 	type JsonObject      = JsonValueBase[Map[String, JsonValue]]
 	type MatchJsonObject = JsonObjectImpl
 
-	final class JsonObjectImpl private[kissjson](internal: Map[String, JsonValue]) extends JsonObject with Dynamic
+	final class JsonObjectImpl private[kissjson](internal: Map[String, JsonValue]) extends JsonObject
 	{
 		private[kissjson] val v = internal.filterNot{case (_, v) => v == JsonNull}
 
 		override def toString: String = v.map{case (k, v) => s""""$k": "$v""""}.mkString("{", ", ", "}")
 
-//		override def selectDynamic(name: String): JsonValue = v.get(name).getOrElse(JsonNull)
+		override def selectDynamic(name: String): JsonValue = v.get(name).getOrElse(JsonNull)
 
 		override private[kissjson] def select(k: String): JsonValue = v.get(k).getOrElse(JsonNull)
-
-		override def apply(): DynamicAccessor = new ObjectAccessor(this)
 
 		override def asMap():Map[String, JsonValue] = v
 	}
@@ -318,8 +299,8 @@ package object kissjson
 // Codecs
 ////////////////////////////////////////////////////////////////////////////////
 
-	implicit class CaseClassToJsonConversor[T <: Product](val in: T)(implicit t: TypeTag[T]) {
-		def toJson:Try[JsonValue] = caseClassCodec(in)(t, implicitly)
+	implicit class ToJsonConversor[T](val in: T)(implicit t: TypeTag[T], env: CoderEnvironment) {
+		def asJson:Try[JsonValue] = tryToEncode(in, t.tpe, env) getOrElse {Failure(new Exception(""))}
 	}
 
 ////////////////////////////////////////////////////////////////////////////////

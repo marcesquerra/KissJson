@@ -43,10 +43,21 @@ package object codec
 	implicit val numberDecoder         = SimpleDecoder[JsonNumber,  Number]        (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")))
 	implicit val booleanDecoder        = SimpleDecoder[JsonBoolean, Boolean]       (_.isInstanceOf[MatchJsonBoolean], _.asInstanceOf[JsonBoolean], _.getOrElse(throw new Exception("")))
 
-//	implicit def collectionDecoder[T : Decoder: TypeTag, C <: Traversable[T] : TypeTag]: Decoder[C] = TraversableDecoder[T, C]
-	implicit def caseClassDecoder[T <: Product]:Decoder[T] = CaseClassDecoder.asInstanceOf[Decoder[T]]
-	implicit def arrayDecoder[T : Decoder: TypeTag : ClassTag]: Decoder[Array[T]] = ArrayDecoder[T]
-	implicit def optionDecoder[T : Decoder: TypeTag]: Decoder[Option[T]] = OptionDecoder[T]
+	def tryToDecode(v: JsonValue, t: Type, env: DecoderEnvironment): Option[Try[_]] = 
+	{
+		for(d <- env)
+		{
+			d.decode(v, t)(env) match
+			{
+				case Some(r) => return Some(r)
+				case None    =>
+			}
+		}
+
+
+		Some(Failure(new Exception("Could not found a decoder")))
+
+	}
 
 	implicit val decoderEnvironment: DecoderEnvironment =
 			stringDecoder             ::
@@ -69,7 +80,7 @@ package object codec
 	type CoderEnvironment = List[Coder]
 	type DecoderEnvironment = List[Decoder[_]]
 
-	private[codec] def doEncode(v: Any, t: Type, env: CoderEnvironment): Option[Try[JsonValue]] =
+	def tryToEncode(v: Any, t: Type, env: CoderEnvironment): Option[Try[JsonValue]] =
 		findEncoder(t, env).flatMap{c => c(v, t, env)}
 
 	@tailrec
