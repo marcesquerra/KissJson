@@ -13,10 +13,10 @@ object JsonDecoder extends App
 	case class JsonMessage(msg: String, age: Int, eMail: Option[String], abc: List[Option[Set[Double]]])
 
 	val jsonString = J(
-			'msg   := "Hello World",
-			'age   := 3,
-			'eMail := "ABC",
-			'abc   := J(J(1, 2), null, J(3)))
+			msg   = "Hello World",
+			age   = 3,
+			eMail = "ABC",
+			abc   = J(J(1, 2), null, J(3)))
 
 	val r1 = jsonString.as[JsonMessage]
 	r1 match
@@ -31,7 +31,7 @@ object JsonDecoder extends App
 
 	val a = J(1, 2, 3)
 
-	val r: Try[List[Int]] = a.as[List[Int]] 
+	val r: Try[List[Int]] = a.as[List[Int]]
 	r match
 	{
 		case Success(msg) =>

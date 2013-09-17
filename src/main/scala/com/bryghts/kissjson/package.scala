@@ -318,8 +318,26 @@ package object kissjson
 	implicit def implicitJson(in: Float):   JsonReal      = JsonNumber  (in : RealNumber)
 	implicit def implicitJson(in: Double):  JsonReal      = JsonNumber  (in : RealNumber)
 
-	def J(in: JsonValue*)                = JsonArray(in:_*)
-	def J(in: (String, JsonValue)*)      = JsonObject(in:_*)
+	object J extends Dynamic
+	{
+		private def fixName(in: String): String = {
+			val regex =  """\$u[\dABCDEFabcdef][\dABCDEFabcdef][\dABCDEFabcdef][\dABCDEFabcdef]""".r
+
+			regex replaceAllIn (in, m => {
+
+				Integer
+					.parseInt(m.matched.substring(2), 16)
+					.toChar
+					.toString
+			})
+		}
+
+		private def fixNames(in: (String, JsonValue)*) = in.map{p => (fixName(p._1), p._2)}
+
+		def applyDynamicNamed(method: String)(in: (String, JsonValue)*) = JsonObject(fixNames(in :_*):_*)
+		def applyDynamic(method: String)(in: JsonValue*) = JsonArray(in:_*)
+	}
+
 
 	implicit class StringJsonExtensions(val in: String) extends AnyVal
 	{
