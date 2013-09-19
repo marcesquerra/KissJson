@@ -39,7 +39,12 @@ package object kissjson
 		private[kissjson] def v: T
 		def isNull:Boolean = false
 
-		override def equals(in: Any) = in.isInstanceOf[JsonValue] && in.asInstanceOf[JsonValue].v == v
+		override def equals(in: Any) = in match
+		{
+			case _: MatchJsonNull => this eq JsonNull
+			case jv: MatchJsonValue => jv.v == v
+			case _ => false
+		}
 
 		final def as[T](implicit tt: TypeTag[T], env: DecoderEnvironment): Try[T] = tryToDecode(this, tt.tpe, env) match {
 			case Some(r) => r.asInstanceOf[Try[T]]
@@ -53,13 +58,14 @@ package object kissjson
 ////////////////////////////////////////////////////////////////////////////////
 
 	type MatchJsonNull = JsonNull.type
+	type JsonNull      = JsonNull.type
 
-	object JsonNull extends JsonValueBase[Unit]
+	object JsonNull extends JsonValueBase[Nothing]
 	{
 		override def toString = "null"
-		private[kissjson] val v = ()
-		override def getOrElse[B >: Unit](default: => B): B = default
-		override def asOption: Option[Unit] = None
+		private[kissjson] def v = throw new Exception("")
+		override def getOrElse[B >: Nothing](default: => B): B = default
+		override def asOption: Option[Nothing] = None
 
 		def unapply(v: JsonValue): Boolean = {
 			v eq this
@@ -164,6 +170,12 @@ package object kissjson
 
 	object JsonInteger
 	{
+		def apply(value: Byte):           JsonInteger  = new JsonIntegerImpl(value)
+		def apply(value: Char):           JsonInteger  = new JsonIntegerImpl(value)
+		def apply(value: Short):          JsonInteger  = new JsonIntegerImpl(value)
+		def apply(value: Int):            JsonInteger  = new JsonIntegerImpl(value)
+		def apply(value: Long):           JsonInteger  = new JsonIntegerImpl(value)
+
 		def unapply(in: Any): Option[IntegerNumber] = in match {
 			case v: MatchJsonInteger => Some(v.v)
 			case _ => None
@@ -172,6 +184,9 @@ package object kissjson
 
 	object JsonReal
 	{
+		def apply(value: Float):          JsonReal     = new JsonRealImpl(value)
+		def apply(value: Double):         JsonReal     = new JsonRealImpl(value)
+
 		def unapply(in: Any): Option[RealNumber] = in match {
 			case v: MatchJsonReal => Some(v.v)
 			case _ => None
