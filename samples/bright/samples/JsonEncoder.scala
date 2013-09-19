@@ -54,14 +54,66 @@ object JsonEncoder extends App
 //
 
 
+////////////////////////////////////////////////////////////////////////////////
+// SOME PLAYGROUND CASE CLASSES
+////////////////////////////////////////////////////////////////////////////////
 
-case class Company(name: String, emails: List[Option[String]], nif: Option[String])
-case class Person(name: String, age: Number, company: Company)
 
-	val n: Number = 3
+	case class EMail(
+			login:        String,
+			domain:       String)
 
-	println(Person("Jhon", 42, Company("Science of Deduction", Some("jhon@deduction.com") :: None :: Some("aaaa@b.c") :: Some("a23@b.c") :: Nil, Some("123")))
-		.asJson
+	case class Person(
+			name:         String,
+			middlename:   Option[String],
+			surname:      String,
+			age:          Int,
+			eMails:       Array[EMail]) 
+
+	case class Employee(
+			self:         Person,
+			ocupation:    String,
+			subordinates: Option[List[Employee]] = None)
+
+	case class Company(
+			name:         String,
+			emails:       Array[EMail],
+			staff:        List[Employee])
+
+
+////////////////////////////////////////////////////////////////////////////////
+// SOME SAMPLE DATA
+////////////////////////////////////////////////////////////////////////////////
+
+	val john = Employee(
+			self = Person (
+					name        = "John",
+					middlename  = Some("Hamish"),
+					surname     = "Watson",
+					age         = 42,
+					eMails      = Array(EMail("john", "deducsciencie.com"))),
+			ocupation = "Chronicler"
+	)
+
+	val sherlock = Employee(
+			self = Person (
+					name        = "Sherlock",
+					middlename  = None,
+					surname     = "Holmes",
+					age         = 38,
+					eMails      = Array(EMail("sherlock", "deducsciencie.com"))),
+			ocupation    = "Consultant Detective",
+			subordinates = Some(List(john))
+	)
+
+	val sd = Company(
+			name   = "Science of Deduction Inc.",
+			emails = Array(EMail("cases", "deducsciencie.com")),
+			staff  = List(john, sherlock)
+	)
+
+	println(
+			sd.asJson
 		.map(_.render)
 		.recover{case t => s"Invalid conversion due to $t"}
 		.get
