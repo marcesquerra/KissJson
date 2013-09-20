@@ -2,7 +2,9 @@ package bright.samples
 
 import com.bryghts.kissjson._
 import com.bryghts.kissnumber.Number
-import scala.reflect.runtime.universe._
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
 
 object JsonEncoder extends App
 {
@@ -68,7 +70,7 @@ object JsonEncoder extends App
 			middlename:   Option[String],
 			surname:      String,
 			age:          Int,
-			eMails:       Array[EMail]) 
+			eMails:       Array[EMail])
 
 	case class Employee(
 			self:         Person,
@@ -79,6 +81,9 @@ object JsonEncoder extends App
 			name:         String,
 			emails:       Array[EMail],
 			staff:        List[Employee])
+
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -106,17 +111,52 @@ object JsonEncoder extends App
 			subordinates = Some(List(john))
 	)
 
+	val companyEmails = Array(
+			EMail("cases",    "deducsciencie.com"),
+			EMail("sherlock", "deducsciencie.com"),
+			EMail("john",     "deducsciencie.com"),
+			EMail("info",     "deducsciencie.com"),
+			EMail("press",    "deducsciencie.com")
+	)
+
 	val sd = Company(
 			name   = "Science of Deduction Inc.",
-			emails = Array(EMail("cases", "deducsciencie.com")),
+			emails = companyEmails,
 			staff  = List(john, sherlock)
 	)
 
-	println(
-			sd.asJson
-		.map(_.render)
-		.recover{case t => s"Invalid conversion due to $t"}
-		.get
-	)
+
+////////////////////////////////////////////////////////////////////////////////
+// Then, we may try to encode all this data into a JsonObject
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+	val jsonSd: Try[JsonValue] = sd.asJson
+
+	show(jsonSd)
+
+
+
+	val jsonCompanyEmails: Try[JsonValue] = companyEmails.asJson
+
+	show(jsonCompanyEmails)
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Some utilities
+////////////////////////////////////////////////////////////////////////////////
+
+	def show(v: Try[JsonValue]) = v match {
+		case Success(json) =>
+			println(json.render)
+
+		case Failure(t)    =>
+			println(s"The json could not be created due to '$t'")
+	}
 
 }
