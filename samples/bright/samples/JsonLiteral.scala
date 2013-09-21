@@ -21,7 +21,7 @@ object JsonLiteral extends App
 
 
 
-	// THIS JSON SCALA LITERAL   is the same than               THIS ENCODED JSON
+	// THIS JSON SCALA LITERAL   is the equivalent to            THIS JSON DOCUMENT
 	                                                        //
 	val json =                                              //
 	J(                                                      //	{

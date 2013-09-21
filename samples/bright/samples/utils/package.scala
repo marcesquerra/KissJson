@@ -52,4 +52,5 @@ package object utils
 			println(s"The json could not be converted to  due to '$t'")
 	}
 
+	def show(v: JsonValue) = println(v.render)
 }
