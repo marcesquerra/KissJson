@@ -5,6 +5,8 @@ import com.bryghts.kissnumber.Number
 import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
+import data._
+
 
 object JsonEncoder extends App
 {
@@ -54,33 +56,6 @@ object JsonEncoder extends App
 //
 //
 //
-
-
-////////////////////////////////////////////////////////////////////////////////
-// SOME PLAYGROUND CASE CLASSES
-////////////////////////////////////////////////////////////////////////////////
-
-
-	case class EMail(
-			login:        String,
-			domain:       String)
-
-	case class Person(
-			name:         String,
-			middlename:   Option[String],
-			surname:      String,
-			age:          Int,
-			eMails:       Array[EMail])
-
-	case class Employee(
-			self:         Person,
-			ocupation:    String,
-			subordinates: Option[List[Employee]] = None)
-
-	case class Company(
-			name:         String,
-			emails:       Array[EMail],
-			staff:        List[Employee])
 
 
 

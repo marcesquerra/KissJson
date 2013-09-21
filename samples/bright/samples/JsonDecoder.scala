@@ -5,11 +5,13 @@ import com.bryghts.kissnumber.Number
 import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
+import data._
+
 
 object JsonDecoder extends App
 {
 
-	println("Hello")
+
 //
 //
 //
@@ -57,34 +59,6 @@ object JsonDecoder extends App
 //
 
 
-////////////////////////////////////////////////////////////////////////////////
-// SOME PLAYGROUND CASE CLASSES
-////////////////////////////////////////////////////////////////////////////////
-
-
-	case class EMail(
-			login:        String,
-			domain:       String)
-
-	case class Person(
-			name:         String,
-			middlename:   Option[String],
-			surname:      String,
-			age:          Int,
-			eMails:       Array[EMail])
-
-	case class Employee(
-			self:         Person,
-			ocupation:    String,
-			subordinates: Option[List[Employee]] = None)
-
-	case class Company(
-			name:         String,
-			emails:       Array[EMail],
-			staff:        List[Employee])
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -130,6 +104,13 @@ object JsonDecoder extends App
 												age        = 42),
 										ocupation = "Chronicler")))))
 
+
+	val jsonCompanyEmails = J(
+			J(login = "cases",    domain = "deducsciencie.com"),
+			J(login = "sherlock", domain = "deducsciencie.com"),
+			J(login = "john",     domain = "deducsciencie.com"),
+			J(login = "info",     domain = "deducsciencie.com"),
+			J(login = "press",    domain = "deducsciencie.com"))
 //		"""
 //
 //	val jsonCompanyEmails = """
@@ -149,9 +130,9 @@ object JsonDecoder extends App
 
 
 
-//	val jsonCompanyEmails: Try[JsonValue] = companyEmails.asJson
-//
-//	show(jsonCompanyEmails)
+	val companyEmails: Try[Array[EMail]] = jsonCompanyEmails.as[Array[EMail]]
+
+	show(companyEmails)
 
 
 
@@ -162,7 +143,12 @@ object JsonDecoder extends App
 // Some utilities
 ////////////////////////////////////////////////////////////////////////////////
 
-	def show[T](v: Try[T]) = v match {
+
+	def show(v: Try[_]) = v match
+	{
+		case Success(r) if r.isInstanceOf[Array[_]]=>
+			println(r.asInstanceOf[Array[_]].mkString("[", ", ", "]"))
+
 		case Success(r) =>
 			println(r)
 
@@ -170,4 +156,8 @@ object JsonDecoder extends App
 			println(s"The json could not be converted to  due to '$t'")
 	}
 
+
+
 }
+
+

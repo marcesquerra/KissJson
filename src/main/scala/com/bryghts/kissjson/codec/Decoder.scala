@@ -96,8 +96,6 @@ object GenericOptionDecoder extends Decoder[Option[_]]
 			{
 				val d = tryToDecode(v, subType(t), env)
 
-				println(d)
-
 				d match {
 					case Some(Failure(t)) => Some(Failure(t))
 					case Some(Success(r)) => Some(Success(Some(r)))
@@ -120,14 +118,12 @@ case class ArrayDecoder[T](implicit internalDecoder: Decoder[T], it: TypeTag[T],
 					r(i) =
 						b match {
 							case Some(Failure(t)) =>
-								println("Here!!!")
 								return Some(Failure(t))
 							case Some(Success(p)) =>
 								p.asInstanceOf[T]
 							case _ => return Some(Failure(new Exception("No Decoder found")))
 						}
 			}
-			println(r)
 			Some(Success(r))
 		}
 		else
@@ -147,14 +143,12 @@ object GenericArrayDecoder extends Decoder[Array[_]]
 				r(i) =
 					b match {
 						case Some(Failure(t)) =>
-							println("Here!!!")
 							return Some(Failure(t))
 						case Some(Success(p)) =>
 							p.asInstanceOf[T]
 						case _ => return Some(Failure(new Exception("No Decoder found")))
 					}
 		}
-		println(r)
 		Some(Success(r))
 	}
 
