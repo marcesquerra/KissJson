@@ -60,13 +60,31 @@ object JsonLiteral extends App
 
 
 
+
+
+
+
+	// Strings
+
 	val s1: JsonString  =              "Hello 1"
 	val s2              = JsonString  ("Hello 2")
 	val s3: JsonValue   =              "Hello 3"
 
+
+
 	println(s1.render)
 	println(s2.render)
 	println(s3.render)
+
+
+
+
+
+
+
+
+
+	// Integer numbers
 
 	val i1: JsonInteger =              1
 	val i2              = JsonInteger (2)
@@ -74,11 +92,23 @@ object JsonLiteral extends App
 	val i4              = JsonNumber  (4)
 	val i5: JsonValue   =              5
 
+
+
 	println(i1.render)
 	println(i2.render)
 	println(i3.render)
 	println(i4.render)
 	println(i5.render)
+
+
+
+
+
+
+
+
+
+	// Real numbers
 
 	val r1: JsonReal    =              1.1
 	val r2              = JsonReal    (2.2)
@@ -86,22 +116,43 @@ object JsonLiteral extends App
 	val r4              = JsonNumber  (4.4)
 	val r5: JsonValue   =              5.5
 
+
+
 	println(r1.render)
 	println(r2.render)
 	println(r3.render)
 	println(r4.render)
 	println(r5.render)
 
+
+
+
+
+
+
+
+
+	// Booleans
+
 	val b1: JsonBoolean =              true
 	val b2              = JsonBoolean (false)
 	val b3: JsonValue   =              true
+
+
 
 	println(b1.render)
 	println(b2.render)
 	println(b3.render)
 
 
-	// JsonNull
+
+
+
+
+
+
+
+	// nulls
 
 	val n1              = JsonNull
 	val n2: JsonValue   = JsonNull
@@ -113,6 +164,8 @@ object JsonLiteral extends App
 	val n8: JsonArray   = JsonNull
 	val n9: JsonObject  = JsonNull
 
+
+
 	println(n1.render)
 	println(n2.render)
 	println(n3.render)
@@ -122,4 +175,12 @@ object JsonLiteral extends App
 	println(n7.render)
 	println(n8.render)
 	println(n9.render)
+
+
+
+
 }
+
+
+
+
