@@ -21,19 +21,19 @@ object JsonLiteral extends App
 
 
 
-	// THIS JSON SCALA LITERAL   is the equivalent to            THIS JSON DOCUMENT
+	// THIS JSON SCALA LITERAL   is the equivalent to         	THIS JSON DOCUMENT
 	                                                        //
 	val json =                                              //
 	J(                                                      //	{
-		`type`     = "Sample Json Object",                  //		"type":     "Sample Json Object",
-		 id        = 12,                                    //		"id":       12,
-		 rating    = 3.7,                                   //		"rating":   3.7,
-		 content   = "characters",                          //		"content":  "characters",
-		 enabled   = true,                                  //		"enabled":  true,
-		 items     =                                        //		"items":
-		 J(                                                 //		{
-		         characters = J("Spock", "Luck")            //			"characters": ["Spock", "Luck"]
-		 )                                                  //		}
+	    `type`     = "Sample Json Object",                  //		"type":     "Sample Json Object",
+	     id        = 12,                                    //		"id":       12,
+	     rating    = 3.7,                                   //		"rating":   3.7,
+	     content   = "characters",                          //		"content":  "characters",
+	     enabled   = true,                                  //		"enabled":  true,
+	     items     =                                        //		"items":
+	     J(                                                 //		{
+	             characters = J("Spock", "Luck")            //			"characters": ["Spock", "Luck"]
+	     )                                                  //		}
 	)                                                       //	}
 
 
