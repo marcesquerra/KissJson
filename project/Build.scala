@@ -6,7 +6,7 @@ object BuildSettings
 
 	val buildSettings = Defaults.defaultSettings ++ Seq(
 			organization := "com.bryghts.kissjson",
-			version      := "0.0.1-M1",
+			version      := "0.0.1-M2",
 			scalaVersion := "2.10.2",
 			scalacOptions ++= Seq(),
 			libraryDependencies += "com.bryghts.kissnumber" % "kissnumber_2.10" % "0.0.1",
