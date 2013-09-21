@@ -15,13 +15,13 @@ object JsonLiteral extends App
 //
 
 
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // THE 'J' METHOD
-////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-	// THIS JSON SCALA LITERAL   is the equivalent to         	THIS JSON DOCUMENT
+	// THIS JSON SCALA LITERAL   is the equivalent to         	THIS JSON OBJECT DOCUMENT
 	                                                        //
 	val json =                                              //
 	J(                                                      //	{
@@ -39,12 +39,26 @@ object JsonLiteral extends App
 
 	println(s"The Json Object is: ${json.render}")
 
+
+
+
+
+
+	// THIS JSON SCALA LITERAL   is the equivalent to         	THIS JSON ARRAY DOCUMENT
+	                                                        //
 	val jarray = J(J(1, 2, 3), J(4, 5, 6))                  //	[[1, 2, 3], [4, 5, 6]]
 
 	println(s"The Json Array is: ${jarray.render}")
 
 
-	// JsonValues
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BASIC TYPES
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 	val s1: JsonString  =              "Hello 1"
 	val s2              = JsonString  ("Hello 2")
