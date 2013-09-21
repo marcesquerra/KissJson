@@ -1,5 +1,7 @@
-package bright.samples.data
+package bright.samples
+package data
 
+import utils._
 
 
 case class EMail(
@@ -23,26 +25,3 @@ case class Company(
 		emails:       Array[EMail],
 		staff:        List[Employee])                                           extends ImprovedToString[Company]
 
-
-
-import scala.reflect.runtime.universe.TypeTag
-import scala.reflect.runtime.universe.typeOf
-
-abstract class ImprovedToString[T <: Product : TypeTag] extends Product
-{
-
-	private def typeName = typeOf[T].typeSymbol.name.decoded
-
-	private val stringize: Any => String = {
-		case a: Array[_]       => a.map(stringize).mkString("[", ", ", "]")
-		case t: Traversable[_] => t.mkString("[", ", ", "]")
-		case s: String         => s""""$s""""
-		case b                 => b.toString
-	}
-
-	override def toString() =
-		productIterator
-			.map(stringize)
-			.mkString(typeName + "(", ", ", ")")
-
-}

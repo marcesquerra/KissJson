@@ -3,6 +3,9 @@ package com.bryghts
 
 import kissjson._
 import scala.util.parsing.json.JSON
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
 
 package kissjson.parser
 {
@@ -10,18 +13,18 @@ package kissjson.parser
 object JsonParser
 {
 
-	def apply(in: String): Option[JsonValue] = {
+	def apply(in: String): Try[JsonValue] = {
 
 		val source = in.trim()
 
 		if(in == "true")
-			Some(JsonBoolean(true))
+			Success(JsonBoolean(true))
 		else if(in == "false")
-			Some(JsonBoolean(false))
+			Success(JsonBoolean(false))
 		else if (source.charAt(0) == '[' || source.charAt(0) == '{')
-			parseObjectOrArray(source)
+			parseObjectOrArray(source).map{Success(_)}.getOrElse(Failure(new Exception("Could not be parsed")))
 		else
-			parseObjectOrArray(s"[$source]").map{_(0)}
+			parseObjectOrArray(s"[$source]").map{_(0)}.map{Success(_)}.getOrElse(Failure(new Exception("Could not be parsed")))
 	}
 
 	private def parseObjectOrArray(source: String): Option[JsonValue] = {

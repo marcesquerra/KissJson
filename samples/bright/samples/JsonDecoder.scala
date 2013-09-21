@@ -6,7 +6,7 @@ import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
 import data._
-
+import utils._
 
 object JsonDecoder extends App
 {
@@ -95,14 +95,14 @@ object JsonDecoder extends App
 						ocupation = "Consultant Detective",
 						subordinates = J(
 								J(
-										self = J(
-												eMails =
-													J(J(login = "john", domain = "deducsciencie.com")),
-												name       = "John",
-												middlename = "Hamish",
-												surname    = "Watson",
-												age        = 42),
-										ocupation = "Chronicler")))))
+									self = J(
+											eMails =
+												J(J(login = "john", domain = "deducsciencie.com")),
+											name       = "John",
+											middlename = "Hamish",
+											surname    = "Watson",
+											age        = 42),
+									ocupation = "Chronicler")))))
 
 
 	val jsonCompanyEmails = J(
@@ -111,11 +111,6 @@ object JsonDecoder extends App
 			J(login = "john",     domain = "deducsciencie.com"),
 			J(login = "info",     domain = "deducsciencie.com"),
 			J(login = "press",    domain = "deducsciencie.com"))
-//		"""
-//
-//	val jsonCompanyEmails = """
-//		[{"login": "cases", "domain": "deducsciencie.com"}, {"login": "sherlock", "domain": "deducsciencie.com"}, {"login": "john", "domain": "deducsciencie.com"}, {"login": "info", "domain": "deducsciencie.com"}, {"login": "press", "domain": "deducsciencie.com"}]
-//	"""
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -135,26 +130,6 @@ object JsonDecoder extends App
 	show(companyEmails)
 
 
-
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Some utilities
-////////////////////////////////////////////////////////////////////////////////
-
-
-	def show(v: Try[_]) = v match
-	{
-		case Success(r) if r.isInstanceOf[Array[_]]=>
-			println(r.asInstanceOf[Array[_]].mkString("[", ", ", "]"))
-
-		case Success(r) =>
-			println(r)
-
-		case Failure(t)    =>
-			println(s"The json could not be converted to  due to '$t'")
-	}
 
 
 

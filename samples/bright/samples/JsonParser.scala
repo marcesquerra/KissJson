@@ -1,27 +1,26 @@
 package bright.samples
 
 import com.bryghts.kissjson._
+import utils._
 
 object JsonParser extends App
 {
 
 	// A JSON OBJECT
 
-	val jsonObjectString = """
-	{
-		"name": "John",
-		"surname": "Whatson"
-	}
+	val jsonObjectString =
+	"""
+		{
+			"name": "John",
+			"surname": "Whatson"
+		}
 	"""
 
 	val jsonObject =
 			jsonObjectString
 			.asJson
-			.getOrElse(throw new Exception("Invalid Json"))
 
-	// The Json Values are converted to their json representation
-	println(jsonObject.?.name + " " + jsonObject.?.surname)
-
+	show(jsonObject)
 
 
 
@@ -34,10 +33,8 @@ object JsonParser extends App
 	val jsonArray =
 			jsonArrayString
 			.asJson
-			.getOrElse(throw new Exception("Invalid Json"))
 
-	// The Json Values are converted to their json representation
-	println(jsonArray(0) + " " + jsonArray(1))
+	show(jsonArray)
 
 
 
@@ -49,9 +46,8 @@ object JsonParser extends App
 	val jsonBoolean =
 			jsonBooleanString
 			.asJson
-			.getOrElse(throw new Exception("Invalid Json"))
 
-	// The Json Values are converted to their json representation
-	println(jsonBoolean)
+	show(jsonBoolean)
 
 }
+

@@ -2,8 +2,17 @@ package bright.samples
 
 import com.bryghts.kissjson._
 
+
 object JsonLiteral extends App
 {
+
+//
+//
+// KissJson offers a simple way to create JSON values with the ability to
+// create JSON literals directly in the Scala code. It's mainly done with the
+// 'J' method.
+//
+//
 
 
 ////////////////////////////////////////////////////////////////////////////////

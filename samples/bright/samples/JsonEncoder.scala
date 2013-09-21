@@ -6,7 +6,7 @@ import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
 import data._
-
+import utils._
 
 object JsonEncoder extends App
 {
@@ -121,17 +121,5 @@ object JsonEncoder extends App
 
 
 
-
-////////////////////////////////////////////////////////////////////////////////
-// Some utilities
-////////////////////////////////////////////////////////////////////////////////
-
-	def show(v: Try[JsonValue]) = v match {
-		case Success(json) =>
-			println(json.render)
-
-		case Failure(t)    =>
-			println(s"The json could not be created due to '$t'")
-	}
 
 }

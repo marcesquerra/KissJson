@@ -357,7 +357,7 @@ package object kissjson
 	implicit class StringJsonExtensions(val in: String) extends AnyVal
 	{
 		@inline
-		def asJson: Option[JsonValue] = parser.JsonParser(in)
+		def asJson: Try[JsonValue] = parser.JsonParser(in)
 
 		@inline
 		def :=[U <% JsonValue] (value: U): Tuple2[String, JsonValue] = Tuple2(in, value)
