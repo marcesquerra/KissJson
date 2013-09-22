@@ -40,4 +40,4 @@ Sbt Dependency:
 libraryDependencies += "com.bryghts.kissjson" % "kissjson_2.10" % "0.0.1-M2"
 ```
 
-![Analythics](http://nojsstats.appspot.com/UA-31897016-1/github.com/marcesquerra/kissjson)]
+![Analythics](http://nojsstats.appspot.com/UA-31897016-1/github.com/marcesquerra/kissjson)
