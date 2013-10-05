@@ -31,17 +31,17 @@ package object codec
 			CaseClassCodec                                        ::
 			Nil
 
-	implicit val stringDecoder         = SimpleDecoder[JsonString,  String]        (_.isInstanceOf[MatchJsonString],  _.asInstanceOf[JsonString],  _.getOrElse(throw new Exception("")))
-	implicit val byteDecoder           = SimpleDecoder[JsonNumber,  Byte]          (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toByte)
-	implicit val shortDecoder          = SimpleDecoder[JsonNumber,  Short]         (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toShort)
-	implicit val intDecoder            = SimpleDecoder[JsonNumber,  Int]           (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toInt)
-	implicit val longDecoder           = SimpleDecoder[JsonNumber,  Long]          (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toLong)
-	implicit val floatDecoder          = SimpleDecoder[JsonNumber,  Float]         (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toFloat)
-	implicit val doubleDecoder         = SimpleDecoder[JsonNumber,  Double]        (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toDouble)
-	implicit val integerNumberDecoder  = SimpleDecoder[JsonNumber,  IntegerNumber] (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toInteger)
-	implicit val realNumberDecoder     = SimpleDecoder[JsonNumber,  RealNumber]    (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toReal)
-	implicit val numberDecoder         = SimpleDecoder[JsonNumber,  Number]        (_.isInstanceOf[MatchJsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")))
-	implicit val booleanDecoder        = SimpleDecoder[JsonBoolean, Boolean]       (_.isInstanceOf[MatchJsonBoolean], _.asInstanceOf[JsonBoolean], _.getOrElse(throw new Exception("")))
+	implicit val stringDecoder         = SimpleDecoder[JsonString,  String]        (_.isInstanceOf[JsonString],  _.asInstanceOf[JsonString],  _.getOrElse(throw new Exception("")))
+	implicit val byteDecoder           = SimpleDecoder[JsonNumber,  Byte]          (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toByte)
+	implicit val shortDecoder          = SimpleDecoder[JsonNumber,  Short]         (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toShort)
+	implicit val intDecoder            = SimpleDecoder[JsonNumber,  Int]           (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toInt)
+	implicit val longDecoder           = SimpleDecoder[JsonNumber,  Long]          (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toLong)
+	implicit val floatDecoder          = SimpleDecoder[JsonNumber,  Float]         (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toFloat)
+	implicit val doubleDecoder         = SimpleDecoder[JsonNumber,  Double]        (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toDouble)
+	implicit val integerNumberDecoder  = SimpleDecoder[JsonNumber,  IntegerNumber] (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toInteger)
+	implicit val realNumberDecoder     = SimpleDecoder[JsonNumber,  RealNumber]    (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")).toReal)
+	implicit val numberDecoder         = SimpleDecoder[JsonNumber,  Number]        (_.isInstanceOf[JsonNumber],  _.asInstanceOf[JsonNumber],  _.getOrElse(throw new Exception("")))
+	implicit val booleanDecoder        = SimpleDecoder[JsonBoolean, Boolean]       (_.isInstanceOf[JsonBoolean], _.asInstanceOf[JsonBoolean], _.getOrElse(throw new Exception("")))
 
 	def tryToDecode(v: JsonValue, t: Type, env: DecoderEnvironment): Option[Try[_]] = 
 	{

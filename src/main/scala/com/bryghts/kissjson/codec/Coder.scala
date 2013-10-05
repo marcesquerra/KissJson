@@ -115,7 +115,7 @@ object ArrayCodec extends Coder
 										c(v, pt.args(0), env).map{_.map{append(accum, _)}}.getOrElse(fail(""))
 
 									case (Failure(t), v) => Failure(t)
-								}.map{JsonArray(_)}
+								}.map{JsonArray[JsonValue](_)(a => JsonNull)}
 
 							case _ =>
 								fail("_")
@@ -147,7 +147,7 @@ object TraversableCodec extends Coder
 											c(v, pt.args(0), env).map{_.map{append(accum, _)}}.getOrElse(fail(""))
 
 										case (Failure(t), v) => Failure(t)
-									}.map{JsonArray(_)}
+									}.map{JsonArray[JsonValue](_)(a => JsonNull)}
 
 								case _ =>
 									fail("_")

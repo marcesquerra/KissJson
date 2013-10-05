@@ -15,7 +15,7 @@ object JsonUsage extends App
 
 	def isPair(in: Int) = in % 2 == 0
 
-	val pair: JsonInteger = {
+	val pair: JsonNumber = {
 		val r = Random.nextInt
 
 		if(isPair(r)) r else JsonNull
@@ -24,8 +24,8 @@ object JsonUsage extends App
 	// You can access it's content with pattern matching
 	pair match
 	{
-		case JsonInteger(i) => println(s"It's the pair number $i")
-		case JsonNull       => println("It's not a pair number")
+		case JsonNumber(i) => println(s"It's the pair number $i")
+		case JsonNull()     => println("It's not a pair number")
 	}
 
 	// or with a .getOrElse method

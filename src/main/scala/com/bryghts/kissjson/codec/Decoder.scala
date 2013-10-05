@@ -108,23 +108,27 @@ object GenericOptionDecoder extends Decoder[Option[_]]
 
 case class ArrayDecoder[T](implicit internalDecoder: Decoder[T], it: TypeTag[T], ct: ClassTag[T]) extends Decoder[Array[T]]
 {
-	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[T]]] =
+	def decode(in: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[T]]] =
 	{
 		if(t <:< typeOf[Array[_]])
 		{
-			val r: Array[T] = new Array[T](v.length)
-
-			v.toList.map{tryToDecode(_, it.tpe, env)}.zipWithIndex.foreach{case (b, i) =>
-					r(i) =
-						b match {
-							case Some(Failure(t)) =>
-								return Some(Failure(t))
-							case Some(Success(p)) =>
-								p.asInstanceOf[T]
-							case _ => return Some(Failure(new Exception("No Decoder found")))
-						}
+			in match {
+				case v: JsonArray[_] =>
+					val r: Array[T] = new Array[T](v.length)
+		
+					v.toList.map{tryToDecode(_, it.tpe, env)}.zipWithIndex.foreach{case (b, i) =>
+							r(i) =
+								b match {
+									case Some(Failure(t)) =>
+										return Some(Failure(t))
+									case Some(Success(p)) =>
+										p.asInstanceOf[T]
+									case _ => return Some(Failure(new Exception("No Decoder found")))
+								}
+					}
+					Some(Success(r))
+				case _ => None
 			}
-			Some(Success(r))
 		}
 		else
 			None
@@ -135,21 +139,25 @@ case class ArrayDecoder[T](implicit internalDecoder: Decoder[T], it: TypeTag[T],
 object GenericArrayDecoder extends Decoder[Array[_]]
 {
 
-	private def doDecode[T](v: JsonValue, t: Type)(implicit env: DecoderEnvironment, ct: ClassTag[T]): Option[Try[Array[_]]] =
+	private def doDecode[T](in: JsonValue, t: Type)(implicit env: DecoderEnvironment, ct: ClassTag[T]): Option[Try[Array[_]]] =
 	{
-		val r: Array[T] = new Array[T](v.length)
-
-		v.toList.map{tryToDecode(_, subType(t), env)}.zipWithIndex.foreach{case (b, i) =>
-				r(i) =
-					b match {
-						case Some(Failure(t)) =>
-							return Some(Failure(t))
-						case Some(Success(p)) =>
-							p.asInstanceOf[T]
-						case _ => return Some(Failure(new Exception("No Decoder found")))
-					}
+		in match {
+			case v: JsonArray[_] =>
+				val r: Array[T] = new Array[T](v.length)
+		
+				v.toList.map{tryToDecode(_, subType(t), env)}.zipWithIndex.foreach{case (b, i) =>
+						r(i) =
+							b match {
+								case Some(Failure(t)) =>
+									return Some(Failure(t))
+								case Some(Success(p)) =>
+									p.asInstanceOf[T]
+								case _ => return Some(Failure(new Exception("No Decoder found")))
+							}
+				}
+				Some(Success(r))
+			case _ => None
 		}
-		Some(Success(r))
 	}
 
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[_]]] =
@@ -163,20 +171,24 @@ object GenericArrayDecoder extends Decoder[Array[_]]
 
 class TraversableDecoder[C <: Traversable[_]](implicit ct : TypeTag[C]) extends Decoder[C]
 {
-	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[C]] =
+	def decode(in: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[C]] =
 	{
 		if(t <:< typeOf[C])
 		{
-			val r = v.toList.map{tryToDecode(_, subType(t), env)}.zipWithIndex.map{case (b, i) =>
-						b match {
-							case Some(Failure(t)) =>
-								return Some(Failure(t))
-							case Some(Success(p)) => p
-							case _ => return Some(Failure(new Exception("No Decoder found")))
-						}
+			in match {
+				case v: JsonArray[_] =>
+					val r = v.toList.map{tryToDecode(_, subType(t), env)}.zipWithIndex.map{case (b, i) =>
+								b match {
+									case Some(Failure(t)) =>
+										return Some(Failure(t))
+									case Some(Success(p)) => p
+									case _ => return Some(Failure(new Exception("No Decoder found")))
+								}
+					}
+		
+					Some(Success(genCollection(t, r).asInstanceOf[C]))
+				case _ => None
 			}
-
-			Some(Success(genCollection(t, r).asInstanceOf[C]))
 		}
 		else
 			None
@@ -210,20 +222,24 @@ class TraversableDecoder[C <: Traversable[_]](implicit ct : TypeTag[C]) extends 
 object GenericTraversableDecoder extends Decoder[Traversable[_]]
 {
 
-	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Traversable[_]]] =
+	def decode(in: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Traversable[_]]] =
 	{
 		if(t <:< typeOf[Traversable[_]])
 		{
-			val r = v.toList.map{tryToDecode(_, subType(t), env)}.zipWithIndex.map{case (b, i) =>
-						b match {
-							case Some(Failure(t)) =>
-								return Some(Failure(t))
-							case Some(Success(p)) => p
-							case _ => return Some(Failure(new Exception("No Decoder found")))
-						}
+			in match {
+				case v: JsonArray[_] =>
+					val r = v.toList.map{tryToDecode(_, subType(t), env)}.zipWithIndex.map{case (b, i) =>
+								b match {
+									case Some(Failure(t)) =>
+										return Some(Failure(t))
+									case Some(Success(p)) => p
+									case _ => return Some(Failure(new Exception("No Decoder found")))
+								}
+					}
+		
+					Some(Success(genCollection(t, r).asInstanceOf[Traversable[_]]))
+				case _ => None
 			}
-
-			Some(Success(genCollection(t, r).asInstanceOf[Traversable[_]]))
 		}
 		else
 			None
@@ -236,7 +252,7 @@ object CaseClassDecoder extends Decoder[Product]
 
 	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Product]] =
 		v match {
-			case jo: MatchJsonObject => doDecode(jo, t)(env)
+			case jo: JsonObject => doDecode(jo, t)(env)
 			case _ => Some(Failure(new Exception("Invalid type of value")))
 		}
 

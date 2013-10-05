@@ -24,7 +24,10 @@ object JsonParser
 		else if (source.charAt(0) == '[' || source.charAt(0) == '{')
 			parseObjectOrArray(source).map{Success(_)}.getOrElse(Failure(new Exception("Could not be parsed")))
 		else
-			parseObjectOrArray(s"[$source]").map{_(0)}.map{Success(_)}.getOrElse(Failure(new Exception("Could not be parsed")))
+			parseObjectOrArray(s"[$source]")
+				.map{_.asInstanceOf[JsonArray[_]].apply(0).asInstanceOf[JsonValue]}
+				.map{Success(_)}
+				.getOrElse(Failure(new Exception("Could not be parsed")))
 	}
 
 	private def parseObjectOrArray(source: String): Option[JsonValue] = {
@@ -36,7 +39,7 @@ object JsonParser
 	}
 
 	private def convert(in: Any): JsonValue = in match {
-			case a: List    [Any]  => JsonArray   (a map convert)
+			case a: List    [Any]  => JsonArray[JsonValue]   (a map convert)(a => JsonNull)
 			case o: Map     [_, _] => JsonObject  (o map {case (k, v) => (k.asInstanceOf[String], convert(v))})
 			case b: Boolean        => JsonBoolean (b)
 			case s: String         => JsonString  (s)

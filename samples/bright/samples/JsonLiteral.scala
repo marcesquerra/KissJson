@@ -47,6 +47,7 @@ object JsonLiteral extends App
 	// THIS JSON SCALA LITERAL   is the equivalent to         	THIS JSON ARRAY DOCUMENT
 	                                                        //
 	val jarray = J(J(1, 2, 3), J(4, 5, 6))                  //	[[1, 2, 3], [4, 5, 6]]
+	val jarray1 = J(J(true), J(false, false))                  //	[[1, 2, 3], [4, 5, 6]]
 
 	println(s"The Json Array is: ${jarray.render}")
 
@@ -84,45 +85,23 @@ object JsonLiteral extends App
 
 
 
-	// Integer numbers
+	// Numbers
 
-	val i1: JsonInteger =              1
-	val i2              = JsonInteger (2)
-	val i3: JsonNumber  =              3
-	val i4              = JsonNumber  (4)
-	val i5: JsonValue   =              5
-
-
-
-	println(i1.render)
-	println(i2.render)
-	println(i3.render)
-	println(i4.render)
-	println(i5.render)
+	val n1: JsonNumber  =              1
+	val n2              = JsonNumber  (2)
+	val n3: JsonValue   =              3
+	val n4: JsonNumber  =              4.4
+	val n5              = JsonNumber  (5.5)
+	val n6: JsonValue   =              6.6
 
 
 
-
-
-
-
-
-
-	// Real numbers
-
-	val r1: JsonReal    =              1.1
-	val r2              = JsonReal    (2.2)
-	val r3: JsonNumber  =              3.3
-	val r4              = JsonNumber  (4.4)
-	val r5: JsonValue   =              5.5
-
-
-
-	println(r1.render)
-	println(r2.render)
-	println(r3.render)
-	println(r4.render)
-	println(r5.render)
+	println(n1.render)
+	println(n2.render)
+	println(n3.render)
+	println(n4.render)
+	println(n5.render)
+	println(n6.render)
 
 
 
@@ -154,27 +133,23 @@ object JsonLiteral extends App
 
 	// nulls
 
-	val n1              = JsonNull
-	val n2: JsonValue   = JsonNull
-	val n3: JsonBoolean = JsonNull
-	val n4: JsonString  = JsonNull
-	val n5: JsonNumber  = JsonNull
-	val n6: JsonInteger = JsonNull
-	val n7: JsonReal    = JsonNull
-	val n8: JsonArray   = JsonNull
-	val n9: JsonObject  = JsonNull
+	val nl1               = JsonNull
+	val nl2: JsonValue    = JsonNull
+	val nl3: JsonBoolean  = JsonNull
+	val nl4: JsonString   = JsonNull
+	val nl5: JsonNumber   = JsonNull
+	val nl6: JsonArray[_] = JsonNull
+	val nl7: JsonObject   = JsonNull
 
 
 
-	println(n1.render)
-	println(n2.render)
-	println(n3.render)
-	println(n4.render)
-	println(n5.render)
-	println(n6.render)
-	println(n7.render)
-	println(n8.render)
-	println(n9.render)
+	println(nl1.render)
+	println(nl2.render)
+	println(nl3.render)
+	println(nl4.render)
+	println(nl5.render)
+	println(nl6.render)
+	println(nl7.render)
 
 
 
