@@ -20,26 +20,35 @@ package object kissjson
 // JsonValue
 ////////////////////////////////////////////////////////////////////////////////
 
-
+/** Parent type of all posible JsonValues */
 type JsonValue = JsonValueBase[_]
 
+/** Defines the common interface to interact with JsonValues */
 sealed trait JsonValueBase[+T] extends SafeDynamic[JsonValue]
 {
+
+	/** Allows access to the contained value inside a JsonValue */
 	private [kissjson] def v: T
 
 	def getOrElse[B >: T](default: => B): B
 	def isNull = false
 
-	override def equals(in: Any): Boolean = in match {
-		case jv: JsonValue if isNull => jv.isNull
-		case jv: JsonValue => if(jv.isNull) false else jv.v == v
-		case _ => false
-	}
+	override def equals(in: Any): Boolean = isEquals(in)
+
+	private[kissjson] def isEquals(in: Any): Boolean =
+		in match {
+			case jv: JsonValue =>
+				if(this.isNull) jv.isNull
+				else if (jv.isNull) false
+				else jv.v == v
+			case _ =>
+				false
+		}
 
 	def selectDynamic(name: String): JsonValue = JsonNull
 
 	def toString: String
-	def render(implicit renderer: Renderer): String = renderer.render(this)
+	final def render(implicit renderer: Renderer): String = renderer.render(this)
 	def asOption: Option[T] = Some(v)
 	def asMap(): Map[String, JsonValue] = Map()
 
@@ -71,15 +80,8 @@ object JsonNull extends JsonNullTrait[Nothing]
 
 	def unapply(in: JsonValue): Boolean = in.isNull
 
-	override def equals(in: Any): Boolean = in match {
-		case jv: JsonValue => jv.isNull
-		case _ => false
-	}
-
 	override def asOption: Option[Nothing] = None
 }
-
-//implicit def convertJsonValueNull (in: JsonNull.type): JsonValue = JsonNull
 
 
 
@@ -223,6 +225,7 @@ class JsonArray[+T <: JsonValue] (private[kissjson] val v: Vector[T])(implicit t
 	def length: Int = v.length
 
 	override def toString: String = v.mkString("[", ", ", "]")
+	override def equals(in: Any) = isEquals(in)
 }
 
 class NullJsonArray[T <: JsonValue](implicit toNull: JsonNull.type => T) extends JsonArray[T](Vector())(toNull) with JsonNullTrait[Vector[T]]

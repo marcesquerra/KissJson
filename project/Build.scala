@@ -9,8 +9,11 @@ object BuildSettings
 			version      := "0.0.1-M2",
 			scalaVersion := "2.10.2",
 			scalacOptions ++= Seq(),
-			libraryDependencies += "com.bryghts.kissnumber" % "kissnumber_2.10" % "0.0.1",
+			libraryDependencies += "com.bryghts.kissnumber" % "kissnumber_2.10" % "0.0.3",
 			libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.10.2",
+			libraryDependencies += "org.specs2" %% "specs2" % "2.2.2" % "test",
+			libraryDependencies += "junit" % "junit" % "4.11" % "test",
+			scalacOptions in Test ++= Seq("-Yrangepos"),
 			publishMavenStyle := true,
 			publishTo <<= version { (v: String) =>
 				val nexus = "https://oss.sonatype.org/"
