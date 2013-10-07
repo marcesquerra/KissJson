@@ -11,30 +11,101 @@ class KissjsonSpecs extends Specification
 
 
 
-	"Reqarding equality, a JsonValue" should {
+	"Reqarding equality" >>
+	{
 
-		"be equal to another JsonValue when both have the same value and are not null" in{
-			val a: JsonValue = 3
-			val b = JsonNumber(3)
-			a mustEqual b
-		}
+		"a JsonValue" should
+		{
 
-		"be equal to another JsonValue when both are null" in{
-			val a: JsonValue = JsonNull
-			val b = JsonNull
-			a mustEqual b
-		}
+			"be equal to another JsonValue when both have the same value and are not null" in{
+				val a: JsonValue = 3
+				val b = JsonNumber(3)
+				a mustEqual b
+			}
 
-		"not be equal to another JsonValue when it's null and the other is not null" in{
-			val a = JsonNull
-			val b = JsonNumber(2)
-			a mustNotEqual b
-		}
+			"be equal to another JsonValue when both are null" in{
+				val a: JsonValue = JsonNull
+				val b = JsonNull
+				a mustEqual b
+			}
 
-		"not be equal to another JsonValue when it's not null and the other is null" in{
-			val a = JsonNumber(2)
-			val b = JsonNull
-			a mustNotEqual b
+			"not be equal to another JsonValue when it's null and the other is a" >> {
+				"JsonBoolean" in{
+					val a = JsonNull
+					val b: JsonValue = true
+					a mustNotEqual b
+				}
+
+				"JsonString" in{
+					val a = JsonNull
+					val b: JsonValue = "string"
+					a mustNotEqual b
+				}
+
+				"JsonNumber" in{
+					val a = JsonNull
+					val b: JsonValue = 3
+					a mustNotEqual b
+				}
+
+				"JsonObject" in{
+					val a = JsonNull
+					val b: JsonValue = J(name = "John")
+					a mustNotEqual b
+				}
+
+				"JsonArray" in{
+					val a = JsonNull
+					val b: JsonValue = J(1, 2, 3)
+					a mustNotEqual b
+				}
+
+				"complex JsonArray" in{
+					val a = JsonNull
+					val b: JsonValue = J(J(1, 2, 3), "string")
+					a mustNotEqual b
+				}
+			}
+
+			"not be equal to another JsonValue when it's a not null" in{
+
+				"JsonBoolean and the other is null" in{
+					val a: JsonValue = true
+					val b = JsonNull
+					a mustNotEqual b
+				}
+
+				"JsonString and the other is null" in{
+					val a: JsonValue = "string"
+					val b = JsonNull
+					a mustNotEqual b
+				}
+
+				"JsonNumber and the other is null" in{
+					val a: JsonValue = 3
+					val b = JsonNull
+					a mustNotEqual b
+				}
+
+				"JsonObject and the other is null" in{
+					val a: JsonValue = J(name = "John")
+					val b = JsonNull
+					a mustNotEqual b
+				}
+
+				"JsonArray and the other is null" in{
+					val a: JsonValue = J(1, 2, 3)
+					val b = JsonNull
+					a mustNotEqual b
+				}
+
+				"complex JsonArray and the other is null" in{
+					val a: JsonValue = J(J(1, 2, 3), "string")
+					val b = JsonNull
+					a mustNotEqual b
+				}
+
+			}
 		}
 
 		"equals method should work properly for arrays" in{
@@ -62,7 +133,7 @@ class KissjsonSpecs extends Specification
 
 
 
-		"be equal to JsonNull when" >> {
+		"a JsonValue should be equal to JsonNull when" >> {
 			"is null" in {
 				JsonNull mustEqual JsonNull
 			}
