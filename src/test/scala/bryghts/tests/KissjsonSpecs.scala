@@ -2,11 +2,13 @@ package bryghts.tests
 
 import org.specs2.mutable._
 import org.specs2.runner.JUnitRunner
+import org.scalacheck._
 import org.junit.runner.RunWith
 import com.bryghts.kissjson._
+import org.specs2.ScalaCheck
 
 @RunWith(classOf[JUnitRunner])
-class KissjsonSpecs extends Specification
+class KissjsonSpecs extends Specification with ScalaCheck
 {
 
 
@@ -67,7 +69,7 @@ class KissjsonSpecs extends Specification
 				}
 			}
 
-			"not be equal to another JsonValue when it's a not null" in{
+			"not be equal to another JsonValue when it's a not null" >>{
 
 				"JsonBoolean and the other is null" in{
 					val a: JsonValue = true
@@ -340,6 +342,26 @@ class KissjsonSpecs extends Specification
 
 
 
+	"The selectDynamic method" should {
+
+		"always return JsonNull for" >> {
+			"JsonNull"    ! check { (name: String) => JsonNull             .selectDynamic(name) mustEqual JsonNull}
+			"JsonBoolean" ! check { (name: String) => JsonBoolean(true)    .selectDynamic(name) mustEqual JsonNull}
+			"JsonString"  ! check { (name: String) => JsonString("string") .selectDynamic(name) mustEqual JsonNull}
+			"JsonNumber"  ! check { (name: String) => JsonNumber(3)        .selectDynamic(name) mustEqual JsonNull}
+			"JsonArray"   ! check { (name: String) => J(1, 2, 3)           .selectDynamic(name) mustEqual JsonNull}
+		}
+
+		"return JsonNull for all non existing keys in a JsonObject" ! check { (name: String) => J(name = "John", age = 32) .selectDynamic(name) mustEqual JsonNull when (name != "name" && name != "age")}
+
+		"return the asociated value for all existing keys in a JsonObject" in {
+			val v = J(name = "John", age = 32)
+
+			v.selectDynamic("name") mustEqual JsonString("John")
+			v.selectDynamic("age") mustEqual JsonNumber(32)
+		}
+
+	}
 
 // TOOLS
 

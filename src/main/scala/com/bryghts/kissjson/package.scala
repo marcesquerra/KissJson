@@ -350,25 +350,25 @@ class BasicJsonConversor[T, That <: JsonValue](f: T => That, toNull: JsonNull.ty
 }
 
 
-implicit class StringJsonExtensions(val in: String) extends AnyVal
+implicit class StringJsonExtensions(val realStringValue: String) extends AnyVal
 {
 	@inline
-	def asJson: Try[JsonValue] = parser.JsonParser(in)
+	def asJson: Try[JsonValue] = parser.JsonParser(realStringValue)
 
 	@inline
-	def :=[U <% JsonValue] (value: U): Tuple2[String, JsonValue] = Tuple2(in, value)
+	def :=[U <% JsonValue] (value: U): Tuple2[String, JsonValue] = Tuple2(realStringValue, value)
 
 	@inline
-	def := (value: Null): Tuple2[String, JsonValue] = Tuple2(in, JsonNull)
+	def := (value: Null): Tuple2[String, JsonValue] = Tuple2(realStringValue, JsonNull)
 }
 
-implicit class SymbolJsonExtensions(val in: Symbol) extends AnyVal
+implicit class SymbolJsonExtensions(val realSymbolValue: Symbol) extends AnyVal
 {
 	@inline
-	def :=[U <% JsonValue] (value: U): Tuple2[String, JsonValue] = Tuple2(in.name, value)
+	def :=[U <% JsonValue] (value: U): Tuple2[String, JsonValue] = Tuple2(realSymbolValue.name, value)
 
 	@inline
-	def := (value: Null): Tuple2[String, JsonValue] = Tuple2(in.name, JsonNull)
+	def := (value: Null): Tuple2[String, JsonValue] = Tuple2(realSymbolValue.name, JsonNull)
 }
 
 implicit object compact extends CompactObjectRenderer
