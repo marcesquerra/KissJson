@@ -257,6 +257,7 @@ class JsonObject(internal: Map[String, JsonValue]) extends JsonValueBase[Map[Str
 	def getOrElse[B >: Map[String, JsonValue]](default: => B): B = v
 	override def selectDynamic(name: String): JsonValue = v.get(name).getOrElse(JsonNull)
 	override def asMap(): Map[String, JsonValue] = v
+	override def toString(): String = internal.map{case (k, v) => s"$k = $v"}.mkString("{", ", ", "}")
 }
 
 object JsonObject

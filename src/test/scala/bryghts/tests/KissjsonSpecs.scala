@@ -244,7 +244,7 @@ class KissjsonSpecs extends Specification with ScalaCheck
 			}
 
 			"it's a not null JsonObject" in {
-				val v: JsonObject = J(name = "Jhon")
+				val v: JsonObject = J(name = "John")
 				v.isNull must beFalse
 			}
 
@@ -254,7 +254,7 @@ class KissjsonSpecs extends Specification with ScalaCheck
 			}
 
 			"it's a not null complex JsonArray" in {
-				val v: JsonArray[JsonArray[JsonString]] = J(J("Jhon"))
+				val v: JsonArray[JsonArray[JsonString]] = J(J("John"))
 				v.isNull must beFalse
 			}
 		}
@@ -284,8 +284,8 @@ class KissjsonSpecs extends Specification with ScalaCheck
 			}
 
 			"it's a not null JsonObject" in {
-				val v: JsonObject = J(name = "Jhon")
-				v.getOrElse(throw new Exception("Failed test")) mustEqual Map("name" -> JsonString("Jhon"))
+				val v: JsonObject = J(name = "John")
+				v.getOrElse(throw new Exception("Failed test")) mustEqual Map("name" -> JsonString("John"))
 			}
 
 			"it's a not null JsonArray" in {
@@ -294,8 +294,8 @@ class KissjsonSpecs extends Specification with ScalaCheck
 			}
 
 			"it's a not null complex JsonArray" in {
-				val v: JsonArray[JsonArray[JsonString]] = J(J("Jhon"))
-				v.getOrElse(throw new Exception("Failed test")) mustEqual Vector(J("Jhon"))
+				val v: JsonArray[JsonArray[JsonString]] = J(J("John"))
+				v.getOrElse(throw new Exception("Failed test")) mustEqual Vector(J("John"))
 			}
 		}
 
@@ -352,7 +352,10 @@ class KissjsonSpecs extends Specification with ScalaCheck
 			"JsonArray"   ! check { (name: String) => J(1, 2, 3)           .selectDynamic(name) mustEqual JsonNull}
 		}
 
-		"return JsonNull for all non existing keys in a JsonObject" ! check { (name: String) => J(name = "John", age = 32) .selectDynamic(name) mustEqual JsonNull when (name != "name" && name != "age")}
+		"return JsonNull for all non existing keys in a JsonObject" ! check
+		{ (name: String) =>
+			J(name = "John", age = 32) .selectDynamic(name) mustEqual JsonNull when (name != "name" && name != "age")
+		}
 
 		"return the asociated value for all existing keys in a JsonObject" in {
 			val v = J(name = "John", age = 32)
@@ -362,6 +365,24 @@ class KissjsonSpecs extends Specification with ScalaCheck
 		}
 
 	}
+
+	"The toString method" should {
+
+		"work for JsonNull"                      in  {JsonNull                       .toString mustEqual "null"}
+		"work for JsonString"                    in  {JsonString  ("One String")     .toString mustEqual "One String"}
+		"work for JsonBoolean(true)"             in  {JsonBoolean (true)             .toString mustEqual "true"}
+		"work for JsonBoolean(false)"            in  {JsonBoolean (false)            .toString mustEqual "false"}
+		"work for JsonNumber(3)"                 in  {JsonNumber  (3)                .toString mustEqual "3"}
+		"work for J(1, 2, 3, 4)"                 in  {J(1, 2, 3, 4)                  .toString mustEqual "[1, 2, 3, 4]"}
+		"work for J(J(1, 2, 3), 2, 3, 4)"        in  {J(J(1, 2, 3), 2, 3, 4)         .toString mustEqual "[[1, 2, 3], 2, 3, 4]"}
+		"work for J(name = \"John\", age = 32)"  in  {
+			(J(name = "John", age = 32)     .toString mustEqual "{name = John, age = 32}") or
+			(J(name = "John", age = 32)     .toString mustEqual "{age = 32, name = John}")
+		}
+
+	}
+
+
 
 // TOOLS
 
