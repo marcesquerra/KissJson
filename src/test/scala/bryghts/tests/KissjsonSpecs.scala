@@ -6,6 +6,8 @@ import org.scalacheck._
 import org.junit.runner.RunWith
 import com.bryghts.kissjson._
 import org.specs2.ScalaCheck
+import com.bryghts.kissjson.renderer.Renderer
+import org.specs2.execute.Result
 
 @RunWith(classOf[JUnitRunner])
 class KissjsonSpecs extends Specification with ScalaCheck
@@ -13,330 +15,64 @@ class KissjsonSpecs extends Specification with ScalaCheck
 
 
 
-	"Reqarding equality" >>
+	"Reqarding equality a JsonValue" should
 	{
 
-		"a JsonValue" should
-		{
+		"be equal to another JsonValue when both have the same value and are not null" in{
+			forallItemsIn(sampleValuesAB){case (a, b) => a mustEqual b}
+		}
 
-			"be equal to another JsonValue when both have the same value and are not null" in{
-				val a: JsonValue = 3
-				val b = JsonNumber(3)
-				a mustEqual b
-			}
+		"be equal to another JsonValue when both are null" in{
+			forallItemsIn(nulls2){case (n1, n2) => n1 mustEqual n2}
+		}
 
-			"be equal to another JsonValue when both are null" in{
-				val a: JsonValue = JsonNull
-				val b = JsonNull
-				a mustEqual b
-			}
-
-			"not be equal to another JsonValue when it's null and the other is a" >> {
-				"JsonBoolean" in{
-					val a = JsonNull
-					val b: JsonValue = true
-					a mustNotEqual b
-				}
-
-				"JsonString" in{
-					val a = JsonNull
-					val b: JsonValue = "string"
-					a mustNotEqual b
-				}
-
-				"JsonNumber" in{
-					val a = JsonNull
-					val b: JsonValue = 3
-					a mustNotEqual b
-				}
-
-				"JsonObject" in{
-					val a = JsonNull
-					val b: JsonValue = J(name = "John")
-					a mustNotEqual b
-				}
-
-				"JsonArray" in{
-					val a = JsonNull
-					val b: JsonValue = J(1, 2, 3)
-					a mustNotEqual b
-				}
-
-				"complex JsonArray" in{
-					val a = JsonNull
-					val b: JsonValue = J(J(1, 2, 3), "string")
-					a mustNotEqual b
-				}
-			}
-
-			"not be equal to another JsonValue when it's a not null" >>{
-
-				"JsonBoolean and the other is null" in{
-					val a: JsonValue = true
-					val b = JsonNull
-					a mustNotEqual b
-				}
-
-				"JsonString and the other is null" in{
-					val a: JsonValue = "string"
-					val b = JsonNull
-					a mustNotEqual b
-				}
-
-				"JsonNumber and the other is null" in{
-					val a: JsonValue = 3
-					val b = JsonNull
-					a mustNotEqual b
-				}
-
-				"JsonObject and the other is null" in{
-					val a: JsonValue = J(name = "John")
-					val b = JsonNull
-					a mustNotEqual b
-				}
-
-				"JsonArray and the other is null" in{
-					val a: JsonValue = J(1, 2, 3)
-					val b = JsonNull
-					a mustNotEqual b
-				}
-
-				"complex JsonArray and the other is null" in{
-					val a: JsonValue = J(J(1, 2, 3), "string")
-					val b = JsonNull
-					a mustNotEqual b
-				}
-
+		"not be equal to another JsonValue when it's null and the other is not" in {
+			forallNulls{n =>
+				forallItemsIn(sampleValuesA){b => n mustNotEqual b}
 			}
 		}
 
-		"equals method should work properly for arrays" in{
-			val a = J(1, J(2, 3))
-			val b = J(1, J(2, 3))
-			val c = J(4, J(5, 6))
-
-			a mustEqual a
-			a mustNotEqual c
-		}
-
-		"equals method should work properly for objects" in{
-			val a = J(name = "John",     surname = "Watson")
-			val b = J(name = "John",     surname = "Watson")
-			val c = J(name = "Sherlock", surname = "Holmes")
-
-			a mustEqual a
-			a mustNotEqual c
-		}
-
-
-
-
-
-
-
-
-		"a JsonValue should be equal to JsonNull when" >> {
-			"is null" in {
-				JsonNull mustEqual JsonNull
-			}
-
-			"it's a null JsonBoolean" in {
-				val v: JsonBoolean = JsonNull
-				v mustEqual JsonNull
-				JsonNull mustEqual v
-			}
-
-			"it's a null JsonString" in {
-				val v: JsonString = JsonNull
-				v mustEqual JsonNull
-				JsonNull mustEqual v
-			}
-
-			"it's a null JsonNumber" in {
-				val v: JsonNumber = JsonNull
-				v mustEqual JsonNull
-				JsonNull mustEqual v
-			}
-
-			"it's a null JsonObject" in {
-				val v: JsonObject = JsonNull
-				v mustEqual JsonNull
-				JsonNull mustEqual v
-			}
-
-			"it's a null JsonArray" in {
-				val v: JsonArray[_] = JsonNull
-
-				(v == JsonNull) must beTrue
-				(JsonNull == v) must beTrue
-
-				(v equals JsonNull) must beTrue
-				(JsonNull equals v) must beTrue
-			}
-
-			"it's a null complex JsonArray" in {
-				val v: JsonArray[JsonArray[JsonString]] = JsonNull
-				v mustEqual JsonNull
+		"not be equal to another JsonValue when it's not null and the other is" in {
+			forallItemsIn(sampleValuesA){a =>
+				forallNulls{n => a mustNotEqual n}
 			}
 		}
+
+		"not be equal to another JsonValue neither is null but they are different" in {
+			forallItemsIn(sampleValuesAiBi){case ((a, ai), (b, bi)) =>
+				a mustNotEqual b when(ai != bi)
+			}
+		}
+
 	}
 
 
 
 	"""Regarding "Option" like behaviour, a JsonValue""" should {
 
-		"identify himself as null when" >> {
-			"is null" in {
-				JsonNull.isNull must beTrue
-			}
-
-			"it's a null JsonBoolean" in {
-				val v: JsonBoolean = JsonNull
-				v.isNull must beTrue
-			}
-
-			"it's a null JsonString" in {
-				val v: JsonString = JsonNull
-				v.isNull must beTrue
-			}
-
-			"it's a null JsonNumber" in {
-				val v: JsonNumber = JsonNull
-				v.isNull must beTrue
-			}
-
-			"it's a null JsonObject" in {
-				val v: JsonObject = JsonNull
-				v.isNull must beTrue
-			}
-
-			"it's a null JsonArray" in {
-				val v: JsonArray[_] = JsonNull
-				v.isNull must beTrue
-			}
-
-			"it's a null complex JsonArray" in {
-				val v: JsonArray[JsonArray[JsonString]] = JsonNull
-				v.isNull must beTrue
-			}
+		"identify himself as null when is null" in {
+			forallNulls{n => n.isNull must beTrue}
 		}
 
 
-		"not identify himself as null when" >> {
-			"is not null" in {
-				val v: JsonValue = JsonBoolean(true)
-				v.isNull must beFalse
-			}
-
-			"it's a not null JsonBoolean" in {
-				val v: JsonBoolean = true
-				v.isNull must beFalse
-			}
-
-			"it's a not null JsonString" in {
-				val v: JsonString = "string"
-				v.isNull must beFalse
-			}
-
-			"it's a not null JsonNumber" in {
-				val v: JsonNumber = 3
-				v.isNull must beFalse
-			}
-
-			"it's a not null JsonObject" in {
-				val v: JsonObject = J(name = "John")
-				v.isNull must beFalse
-			}
-
-			"it's a not null JsonArray" in {
-				val v: JsonArray[_] = J(true)
-				v.isNull must beFalse
-			}
-
-			"it's a not null complex JsonArray" in {
-				val v: JsonArray[JsonArray[JsonString]] = J(J("John"))
-				v.isNull must beFalse
-			}
+		"not identify himself as null when is not null" in {
+			forallItemsIn(sampleValuesA){a => a.isNull must beFalse}
 		}
 
 
 
 
-		"return it's content with the method getOrElse when" >> {
-			"is not null" in {
-				val v: JsonValue = JsonBoolean(true)
-				v.getOrElse(throw new Exception("Failed test")) mustEqual true
-			}
-
-			"it's a not null JsonBoolean" in {
-				val v: JsonBoolean = true
-				v.getOrElse(throw new Exception("Failed test")) mustEqual true
-			}
-
-			"it's a not null JsonString" in {
-				val v: JsonString = "string"
-				v.getOrElse(throw new Exception("Failed test")) mustEqual "string"
-			}
-
-			"it's a not null JsonNumber" in {
-				val v: JsonNumber = 3
-				v.getOrElse(throw new Exception("Failed test")) mustEqual 3
-			}
-
-			"it's a not null JsonObject" in {
-				val v: JsonObject = J(name = "John")
-				v.getOrElse(throw new Exception("Failed test")) mustEqual Map("name" -> JsonString("John"))
-			}
-
-			"it's a not null JsonArray" in {
-				val v: JsonArray[_] = J(true)
-				v.getOrElse(throw new Exception("Failed test")) mustEqual Vector(JsonBoolean(true))
-			}
-
-			"it's a not null complex JsonArray" in {
-				val v: JsonArray[JsonArray[JsonString]] = J(J("John"))
-				v.getOrElse(throw new Exception("Failed test")) mustEqual Vector(J("John"))
+		"return it's content with the method getOrElse when is not null" in {
+			forallItemsIn(sampleValuesWithContent){case (v, r) =>
+				v.getOrElse(throw new Exception("Failed test")) mustEqual r
 			}
 		}
 
 
 
-		"return the default value from the method getOrElse when" >> {
+		"return the default value from the method getOrElse when" in {
 
-			"is null" in {
-				val v: JsonValue = JsonNull
-				v.getOrElse(Default) mustEqual Default
-			}
-
-			"it's a null JsonBoolean" in {
-				val v: JsonBoolean = JsonNull
-				v.getOrElse(Default) mustEqual Default
-			}
-
-			"it's a null JsonString" in {
-				val v: JsonString = JsonNull
-				v.getOrElse(Default) mustEqual Default
-			}
-
-			"it's a null JsonNumber" in {
-				val v: JsonNumber = JsonNull
-				v.getOrElse(Default) mustEqual Default
-			}
-
-			"it's a null JsonObject" in {
-				val v: JsonObject = JsonNull
-				v.getOrElse(Default) mustEqual Default
-			}
-
-			"it's a null JsonArray" in {
-				val v: JsonArray[_] = JsonNull
-				v.getOrElse(Default) mustEqual Default
-			}
-
-			"it's a null complex JsonArray" in {
-				val v: JsonArray[JsonArray[JsonString]] = JsonNull
-				v.getOrElse(Default) mustEqual Default
-			}
+			forallNulls{case n => n.getOrElse(Default) mustEqual Default}
 		}
 	}
 
@@ -345,11 +81,13 @@ class KissjsonSpecs extends Specification with ScalaCheck
 	"The selectDynamic method" should {
 
 		"always return JsonNull for" >> {
-			"JsonNull"    ! check { (name: String) => JsonNull             .selectDynamic(name) mustEqual JsonNull}
-			"JsonBoolean" ! check { (name: String) => JsonBoolean(true)    .selectDynamic(name) mustEqual JsonNull}
-			"JsonString"  ! check { (name: String) => JsonString("string") .selectDynamic(name) mustEqual JsonNull}
-			"JsonNumber"  ! check { (name: String) => JsonNumber(3)        .selectDynamic(name) mustEqual JsonNull}
-			"JsonArray"   ! check { (name: String) => J(1, 2, 3)           .selectDynamic(name) mustEqual JsonNull}
+			"JsonNull"    ! check { (name: String) =>forallNulls{n => n   .selectDynamic(name) mustEqual JsonNull}}
+
+			"any non JsonObject" ! check{ (name: String) =>
+				forallItemsIn(sampleValuesA.filterNot(_.isInstanceOf[JsonObject])){a =>
+					a.selectDynamic(name) mustEqual JsonNull
+				}
+			}
 		}
 
 		"return JsonNull for all non existing keys in a JsonObject" ! check
@@ -368,25 +106,137 @@ class KissjsonSpecs extends Specification with ScalaCheck
 
 	"The toString method" should {
 
-		"work for JsonNull"                      in  {JsonNull                       .toString mustEqual "null"}
-		"work for JsonString"                    in  {JsonString  ("One String")     .toString mustEqual "One String"}
-		"work for JsonBoolean(true)"             in  {JsonBoolean (true)             .toString mustEqual "true"}
-		"work for JsonBoolean(false)"            in  {JsonBoolean (false)            .toString mustEqual "false"}
-		"work for JsonNumber(3)"                 in  {JsonNumber  (3)                .toString mustEqual "3"}
-		"work for J(1, 2, 3, 4)"                 in  {J(1, 2, 3, 4)                  .toString mustEqual "[1, 2, 3, 4]"}
-		"work for J(J(1, 2, 3), 2, 3, 4)"        in  {J(J(1, 2, 3), 2, 3, 4)         .toString mustEqual "[[1, 2, 3], 2, 3, 4]"}
-		"work for J(name = \"John\", age = 32)"  in  {
-			(J(name = "John", age = 32)     .toString mustEqual "{name = John, age = 32}") or
-			(J(name = "John", age = 32)     .toString mustEqual "{age = 32, name = John}")
-		}
+		"return \"null\" for JsonNull" in
+			{forallNulls{n => n             .toString mustEqual "null"}}
+
+		"return the apropriate text for non null values" in
+			{forallItemsIn(sampleValuesWithStringRepresentations){case (v, l) => l.contains(v.toString) must beTrue}}
 
 	}
 
+	"The render method" should {
+
+		case class MockRenderer() extends Renderer {
+
+			var value: JsonValue = null
+
+			def renderNull    (in: JsonNull,      out: StringBuilder): StringBuilder = {value = in; out}
+			def renderNumber  (in: JsonNumber,    out: StringBuilder): StringBuilder = {value = in; out}
+			def renderString  (in: JsonString,    out: StringBuilder): StringBuilder = {value = in; out}
+			def renderBoolean (in: JsonBoolean,   out: StringBuilder): StringBuilder = {value = in; out}
+			def renderArray   (in: JsonArray[_],  out: StringBuilder): StringBuilder = {value = in; out}
+			def renderObject  (in: JsonObject,    out: StringBuilder): StringBuilder = {value = in; out}
+
+		}
+
+		"work with the render directly supplied"    in {forallValsAndNulls  {n =>          val r = MockRenderer(); n.render(r); n mustEqual r.value}}
+		"work with the render implicitly supplied"  in {forallValsAndNulls  {n => implicit val r = MockRenderer(); n.render;    n mustEqual r.value}}
+
+	}
+
+	"The asOption method" should {
+
+		"return None for null values" in {forallNulls{n => n.asOption mustEqual None}}
+		"return Some(theWrappedValue) for non null values" in {forallItemsIn(sampleValuesWithContent){case (v, c) => v.asOption mustEqual Some(c)}}
+
+	}
+
+	"The asMap method" should {
+
+		"return an empty Map for null values" in
+			{ forallNulls{n => n.asMap mustEqual Map()} }
+
+		"return an empty Map for non JsonObject values" in
+			{ forallItemsIn(sampleValuesA.filterNot(_.isInstanceOf[JsonObject])){v => v.asMap mustEqual Map()}}
+
+		"return the wrapped Map for JsonObjects" in
+			{ forallItemsIn(sampleValuesWithContent.filter{case (v, _) => v.isInstanceOf[JsonObject]}){case (v, c) => v.asMap mustEqual c}}
+
+	}
 
 
 // TOOLS
 
 	private case object Default
+	private val nulls = List(
+		JsonNull,
+		JsonNull: JsonNumber,
+		JsonNull: JsonString,
+		JsonNull: JsonBoolean,
+		JsonNull: JsonArray[_],
+		JsonNull: JsonObject)
+
+	private val nulls2 = nulls.flatMap{n1 => nulls.map{n2 => (n1, n2)}}
+
+	private def forallItemsIn[T](l: List[T])(f: T => Result): Result = l.foldLeft((1 === 1) : Result){(r: Result, n: T) => r and f(n)}
+
+	private def forallNulls        (f: JsonValue => Result): Result = forallItemsIn(nulls)(f)
+	private def forallValues       (f: JsonValue => Result): Result = forallItemsIn(sampleValuesA)(f)
+	private def forallValsAndNulls (f: JsonValue => Result): Result = forallItemsIn(valsAndNulls)(f)
+
+	private val sampleValuesA = List(
+		JsonNumber(3),
+		JsonNumber(4),
+		JsonString("string"),
+		JsonString("other string"),
+		JsonBoolean(true),
+		JsonBoolean(false),
+		J(1, 2, 3),
+		J(1, 2, 3, "string"),
+		J(name = "John"),
+		J(name = "John", age = 32)
+	)
+
+	private val sampleValuesAi = sampleValuesA.zipWithIndex
+
+	private val sampleValuesB = List(
+		JsonNumber(3),
+		JsonNumber(4),
+		JsonString("string"),
+		JsonString("other string"),
+		JsonBoolean(true),
+		JsonBoolean(false),
+		J(1, 2, 3),
+		J(1, 2, 3, "string"),
+		J(name = "John"),
+		J(name = "John", age = 32)
+	)
+
+	private val sampleValuesBi = sampleValuesB.zipWithIndex
+
+	private val sampleValuesAB   = sampleValuesA  zip sampleValuesB
+	private val sampleValuesAiBi = sampleValuesAi zip sampleValuesBi
+
+	private val containedValues = List(
+		3,
+		4,
+		"string",
+		"other string",
+		true,
+		false,
+		Vector(JsonNumber(1), JsonNumber(2), JsonNumber(3)),
+		Vector(JsonNumber(1), JsonNumber(2), JsonNumber(3), JsonString("string")),
+		Map("name" -> JsonString("John")),
+		Map("name" -> JsonString("John"), "age" -> JsonNumber(32))
+	)
+
+
+	private val stringRepresentationsValues = List(
+		"3" :: Nil,
+		"4" :: Nil,
+		"string" :: Nil,
+		"other string" :: Nil,
+		"true" :: Nil,
+		"false" :: Nil,
+		"[1, 2, 3]" :: Nil,
+		"[1, 2, 3, string]" :: Nil,
+		"{name = John}" :: Nil,
+		"{name = John, age = 32}" :: "{age = 32, name = John}" :: Nil
+	)
+
+	private val sampleValuesWithContent = sampleValuesA zip containedValues
+	private val sampleValuesWithStringRepresentations = sampleValuesA zip stringRepresentationsValues
+	private val valsAndNulls = sampleValuesA ++ nulls
 }
 
 

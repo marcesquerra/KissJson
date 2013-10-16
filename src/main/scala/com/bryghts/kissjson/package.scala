@@ -1,7 +1,6 @@
 package com.bryghts
 
 import scala.reflect.runtime.universe.TypeTag
-import scala.reflect.runtime.universe.typeOf
 import scala.language.implicitConversions
 import scala.language.dynamics
 import com.bryghts.safedynamic.SafeDynamic
@@ -11,7 +10,6 @@ import scala.util.Try
 import scala.util.Failure
 import com.bryghts.kissnumber._
 import com.bryghts.kissjson.renderer.CompactObjectRenderer
-import scala.reflect.ClassTag
 
 package object kissjson
 {
@@ -48,7 +46,9 @@ sealed trait JsonValueBase[+T] extends SafeDynamic[JsonValue]
 	def selectDynamic(name: String): JsonValue = JsonNull
 
 	def toString: String
-	final def render(implicit renderer: Renderer): String = renderer.render(this)
+
+	final def render(implicit renderer: Renderer = compact): String = renderer.render(this)
+
 	def asOption: Option[T] = Some(v)
 	def asMap(): Map[String, JsonValue] = Map()
 
@@ -315,7 +315,7 @@ object J extends Dynamic
 
 	private def fixNames(in: (String, JsonValue)*) = in.map{p => (fixName(p._1), p._2)}
 
-	def applyDynamicNamed(method: String)(in: (String, JsonValue)*) = JsonObject(fixNames(in :_*))
+	def applyDynamicNamed(method: String)(in: (String, JsonValue)*): JsonObject = JsonObject(fixNames(in :_*))
 
 	def applyDynamic[That <: JsonValue, T](name: String)(in: T*)(implicit cnv: JsonConversor[T, That]): JsonArray[That] = new JsonArray(in.toVector.map(cnv(_)))(cnv)
 }
@@ -372,7 +372,7 @@ implicit class SymbolJsonExtensions(val realSymbolValue: Symbol) extends AnyVal
 	def := (value: Null): Tuple2[String, JsonValue] = Tuple2(realSymbolValue.name, JsonNull)
 }
 
-implicit object compact extends CompactObjectRenderer
+object compact extends CompactObjectRenderer
 
 }
 
