@@ -10,6 +10,7 @@ import scala.util.Try
 import scala.util.Failure
 import com.bryghts.kissnumber._
 import com.bryghts.kissjson.renderer.CompactObjectRenderer
+import com.bryghts.kissjson.parser2.tools.StringSource
 
 package object kissjson
 {
@@ -318,6 +319,9 @@ object J extends Dynamic
 	def applyDynamicNamed(method: String)(in: (String, JsonValue)*): JsonObject = JsonObject(fixNames(in :_*))
 
 	def applyDynamic[That <: JsonValue, T](name: String)(in: T*)(implicit cnv: JsonConversor[T, That]): JsonArray[That] = new JsonArray(in.toVector.map(cnv(_)))(cnv)
+
+	def emptyArray() : JsonArray[JsonValue] = new JsonArray[JsonValue](Vector[JsonValue]())(_ => JsonNull)
+	def emptyObject() : JsonObject = new JsonObject(Map())
 }
 
 
@@ -354,7 +358,7 @@ class BasicJsonConversor[T, That <: JsonValue](f: T => That, toNull: JsonNull.ty
 implicit class StringJsonExtensions(val realStringValue: String) extends AnyVal
 {
 	@inline
-	def asJson: Try[JsonValue] = parser.JsonParser(realStringValue)
+	def asJson: Try[JsonValue] = Try{parser2.Parser(new StringSource(realStringValue))}
 
 	@inline
 	def :=[U <% JsonValue] (value: U): Tuple2[String, JsonValue] = Tuple2(realStringValue, value)

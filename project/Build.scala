@@ -14,6 +14,11 @@ object BuildSettings
 			libraryDependencies += "org.specs2" %% "specs2" % "2.2.2" % "test",
 			libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test",
 			libraryDependencies += "junit" % "junit" % "4.11" % "test",
+			libraryDependencies += "net.liftweb" % "lift-json_2.10" % "2.5.1" % "test",
+			libraryDependencies += "org.codehaus.jackson" % "jackson-core-asl" % "1.9.13" % "test",
+			libraryDependencies += "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13" % "test",
+			libraryDependencies += "net.minidev" % "json-smart" % "1.2" % "test",
+			libraryDependencies += "com.google.code.gson" % "gson" % "2.2.4" % "test",
 			scalacOptions in Test ++= Seq("-Yrangepos"),
 			publishMavenStyle := true,
 			publishTo <<= version { (v: String) =>
