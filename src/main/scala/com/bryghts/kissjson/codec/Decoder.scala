@@ -12,14 +12,15 @@ import scala.language.reflectiveCalls
 trait Decoder[T]
 {
 
-	private[codec] val m = runtimeMirror(getClass.getClassLoader)
-	private[codec] def classTag[T](t: Type): ClassTag[T] = {
-		val rtc = m.runtimeClass(t)
-		ClassTag(rtc)
-	}
 
 	private[codec] def genCollection(t: Type, v: List[_]): Any =
 	{
+		val m = runtimeMirror(t.getClass.getClassLoader)
+		def classTag[T](t: Type): ClassTag[T] = {
+			val rtc = m.runtimeClass(t)
+			ClassTag(rtc)
+		}
+
 		val s = t.typeSymbol.companionSymbol
 		val mthd =
 					s
@@ -160,12 +161,18 @@ object GenericArrayDecoder extends Decoder[Array[_]]
 		}
 	}
 
-	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[_]]] =
+	def decode(v: JsonValue, t: Type)(implicit env: DecoderEnvironment): Option[Try[Array[_]]] = {
+		val m = runtimeMirror(t.getClass.getClassLoader)
+		def classTag[T](t: Type): ClassTag[T] = {
+			val rtc = m.runtimeClass(t)
+			ClassTag(rtc)
+		}
+
 		if(t <:< typeOf[Array[_]])
 			doDecode(v, t)(env, classTag(subType(t)))
 		else
 			None
-
+	}
 }
 
 
@@ -258,6 +265,12 @@ object CaseClassDecoder extends Decoder[Product]
 
 	private def doDecode(v: JsonObject, t: Type)(implicit env: DecoderEnvironment): Option[Try[Product]] =
 	{
+		val m = runtimeMirror(t.getClass.getClassLoader)
+		def classTag[T](t: Type): ClassTag[T] = {
+			val rtc = m.runtimeClass(t)
+			ClassTag(rtc)
+		}
+
 
 		if(!t.typeSymbol.asClass.isCaseClass)    return None
 

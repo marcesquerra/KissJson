@@ -46,7 +46,7 @@ object CaseClassCodec extends Coder
 	override protected def encode(in: Any, t: Type, env: CoderEnvironment): Try[JsonValue] =
 	{
 
-		val m = ru.runtimeMirror(in.getClass.getClassLoader)
+		val m = ru.runtimeMirror(t.getClass.getClassLoader)
 
 		val ctor = t.declaration(ru.nme.CONSTRUCTOR).asMethod
 
