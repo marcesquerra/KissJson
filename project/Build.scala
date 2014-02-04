@@ -7,7 +7,7 @@ object BuildSettings
 	val buildSettings = Defaults.defaultSettings ++ Seq(
 			organization := "com.bryghts.kissjson",
 			version      := "0.0.1-M5",
-			scalaVersion := "2.10.2",
+			scalaVersion := "2.10.3",
 			scalacOptions ++= Seq(),
 			libraryDependencies += "com.bryghts.kissnumber" % "kissnumber_2.10" % "0.0.3",
 			libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.10.2",
@@ -19,6 +19,10 @@ object BuildSettings
 			libraryDependencies += "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.13" % "test",
 			libraryDependencies += "net.minidev" % "json-smart" % "1.2" % "test",
 			libraryDependencies += "com.google.code.gson" % "gson" % "2.2.4" % "test",
+			libraryDependencies += "com.typesafe.play" %% "play-json" % "2.2.1" % "test",
+			libraryDependencies += "com.alibaba" % "fastjson" % "1.1.38" % "test",
+			libraryDependencies += "net.sf.json-lib" % "json-lib" % "2.4" % "test" classifier("jdk15"),
+			resolvers += "Typesafe repository" at "http://repo.typesafe.com/typesafe/releases/",
 			scalacOptions in Test ++= Seq("-Yrangepos"),
 			publishMavenStyle := true,
 			publishTo <<= version { (v: String) =>

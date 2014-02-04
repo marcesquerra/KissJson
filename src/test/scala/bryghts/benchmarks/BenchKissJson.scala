@@ -1,7 +1,7 @@
 package bryghts.benchmarks
 
-import com.bryghts.kissjson.parser2.Parser
-import com.bryghts.kissjson.parser2.tools.StringSource
+import com.bryghts.kissjson.parser.Parser
+import com.bryghts.kissjson.parser.tools.StringSource
 import org.specs2.SpecificationFeatures
 import org.specs2.execute.{Result, AsResult, ResultLike}
 
@@ -9,7 +9,7 @@ import org.specs2.execute.{Result, AsResult, ResultLike}
 trait BenchKissJson extends HasBenchmarks with SpecificationFeatures
 {
 
-	private   val parseKissJson: String => Any = js => Parser(new StringSource(js))
+	private   val parseKissJson: String => Any = js => Parser(js)
 
 	protected val parseOther: String => Any
 

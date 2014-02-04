@@ -1,12 +1,18 @@
 package bryghts.benchmarks
 
-import org.specs2.mutable._
 import org.specs2.ScalaCheck
+import bryghts.tests.ParserSpecs
 
-abstract class Benchmarking extends Specification with ScalaCheck with BenchKissJson
+abstract class Benchmarking extends ParserSpecs with ScalaCheck with BenchKissJson
 {
-	protected def NUMBER_OF_BENCHMARK_EXECUTIONS:Int = 500000
 
+	sequential
+
+	protected def NUMBER_OF_BENCHMARK_EXECUTIONS:Int = 50000
+
+	""" benchamrk sample json """   in bench("Sample JSON", json)
+	""" benchamrk long string """   in bench("Long String", longString)
+	""" benchamrk short string """  in bench("Short String", shortString)
 	""" benchmark "true" """        in bench("true")
 	""" benchmark "false" """       in bench("false")
 	""" benchmark "null" """        in bench("null")
@@ -16,9 +22,8 @@ abstract class Benchmarking extends Specification with ScalaCheck with BenchKiss
 	""" benchamrk array 1 """       in bench("array 1", arr1)
 	""" benchamrk array 2 """       in bench("array 2", arr2)
 	""" benchamrk object """        in bench("object", obj)
-	""" benchamrk sample json """   in bench("Sample JSON", json)
-	""" benchamrk long string """   in bench("Long String", longString)
-	""" benchamrk short string """  in bench("Short String", shortString)
+	""" benchamrk scaped 1 """      in bench(" \"ab\\\"c\\\\b\\/b\\byyy\\fyyy\\nyyy\\ryyy\\tyyy\\u0123yyy\\u4567yyy\\u89AByyy\\uCDEFyyy\" ")
+	""" benchamrk scaped 2 """      in bench(" \"ab\\\"c\\\\b\\/b\\byyy\\fyyy\\nyyy\\ryyy\\tyyy\\u0123yyy\\u4567yyy\\u89abyyy\\ucdefyyy\" ")
 
 
 	val json = """

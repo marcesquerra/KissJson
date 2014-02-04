@@ -1,72 +1,43 @@
-package com.bryghts.kissjson
-package renderer
+package com.bryghts.kissjson.renderer
 
-import StringBuilder._
+import scala.util.Try
 
-trait Renderer
+object Renderer
 {
 
-	def renderNull    (in: JsonNull,      out: StringBuilder): StringBuilder
-	def renderNumber  (in: JsonNumber,    out: StringBuilder): StringBuilder
-	def renderString  (in: JsonString,    out: StringBuilder): StringBuilder
-	def renderBoolean (in: JsonBoolean,   out: StringBuilder): StringBuilder
-	def renderArray   (in: JsonArray[_],  out: StringBuilder): StringBuilder
-	def renderObject  (in: JsonObject,    out: StringBuilder): StringBuilder
+	def apply(in: Any): Try[String] = Try(renderAny(in))
 
+	private def render(in: Byte):    String = in.toString
+	private def render(in: Char):    String = in.toShort.toString
+	private def render(in: Short):   String = in.toString
+	private def render(in: Int):     String = in.toString
+	private def render(in: Long):    String = in.toString
+	private def render(in: Float):   String = in.toString
+	private def render(in: Double):  String = in.toString
 
-	final def render  (in: JsonValue, out: StringBuilder): StringBuilder = in match
-	{
-		case i: JsonNull    => renderNull    (i, out)
-		case i: JsonNumber  => renderNumber  (i, out)
-		case i: JsonString  => renderString  (i, out)
-		case i: JsonBoolean => renderBoolean (i, out)
-		case i: JsonArray[_]=> renderArray   (i, out)
-		case i: JsonObject  => renderObject  (i, out)
+	private def render(in: Boolean): String = in.toString
+
+	private def render(in: String):  String = s""" "${in.replace("\\", "\\\\").replace("\"", "\\\"")}" """.trim
+
+	private def renderAny(in: Any): String = in match {
+		case in: Byte            => render(in)
+		case in: Char            => render(in)
+		case in: Short           => render(in)
+		case in: Int             => render(in)
+		case in: Long            => render(in)
+		case in: Float           => render(in)
+		case in: Double          => render(in)
+		case in: Boolean         => render(in)
+		case in: String          => render    (in)
+		case in: Map[Any, Any]   => renderMap (in)
+		case in: Traversable[_]  => renderT   (in)
+		case in: Array[Any]      => renderA   (in)
+		case in =>
+			throw new Exception(s"'${in.getClass}' Can not be rendered")
 	}
 
-////////////////////////////////////////////////////////////////////////////////
+	private def renderT   (in: Traversable[Any]): String   = in.map{renderAny(_)}.mkString("[", ", ", "]")
+	private def renderA   (in: Array[Any]):       String   = in.map{renderAny(_)}.mkString("[", ", ", "]")
+	private def renderMap (in: Map[Any, Any]):    String   = in.map{case (k: String, v) => s"${render(k)}: ${renderAny(v)}" case _ => throw new Exception("Can not be rendered")}.mkString("{", ", ", "}")
 
-	final def renderNull    (in: JsonNull = JsonNull): String = renderNull    (in,  newBuilder).toString
-	final def renderNumber  (in: JsonNumber         ): String = renderNumber  (in,  newBuilder).toString
-	final def renderString  (in: JsonString         ): String = renderString  (in,  newBuilder).toString
-	final def renderBoolean (in: JsonBoolean        ): String = renderBoolean (in,  newBuilder).toString
-	final def renderArray   (in: JsonArray[_]       ): String = renderArray   (in,  newBuilder).toString
-	final def renderObject  (in: JsonObject         ): String = renderObject  (in,  newBuilder).toString
-	final def render        (in: JsonValue          ): String = render        (in,  newBuilder).toString
-
-}
-
-class CompactObjectRenderer extends Renderer
-{
-	import CompactObjectRenderer._
-
-	def renderNull    (in: JsonNull,      out: StringBuilder): StringBuilder = out ++= "null"
-	def renderNumber  (in: JsonNumber,    out: StringBuilder): StringBuilder = out ++= in.asOption.map{_.toString}      .getOrElse("null")
-	def renderString  (in: JsonString,    out: StringBuilder): StringBuilder = out ++= in.asOption.map{_.asStringValue} .getOrElse("null")
-	def renderBoolean (in: JsonBoolean,   out: StringBuilder): StringBuilder = out ++= in.asOption.map{_.toString}      .getOrElse("null")
-
-	def renderArray   (in: JsonArray[_],   out: StringBuilder): StringBuilder = {
-
-		out ++= "["
-		in.foldLeft(true){(first, i) => out ++= (if(first) "" else ", "); render(i.asInstanceOf[JsonValue], out); false}
-		out ++= "]"
-
-	}
-
-	def renderObject  (in: JsonObject,  out: StringBuilder): StringBuilder = {
-
-		out ++= "{"
-		in.asMap.foldLeft(true){case (first, (k, i)) => out ++= (if(first) "" else ", "); out ++= k.asStringValue ++= ": "; render(i, out); false}
-		out ++= "}"
-
-	}
-
-}
-
-object CompactObjectRenderer
-{
-	private implicit class StringOps(val s: String) extends AnyVal
-	{
-		def asStringValue = "\"" + s.replaceAll("\"", "\\\"") + "\""
-	}
 }
