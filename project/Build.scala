@@ -9,8 +9,8 @@ object BuildSettings
 			version      := "0.1.0",
 			scalaVersion := "2.10.3",
 			scalacOptions ++= Seq(),
-			libraryDependencies += "com.bryghts.kissnumber" % "kissnumber_2.10" % "0.0.3",
 			libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.10.2",
+			libraryDependencies += "com.bryghts.kissmx" % "KissMx" % "0.0.1",
 			libraryDependencies += "org.specs2" %% "specs2" % "2.2.2" % "test",
 			libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test",
 			libraryDependencies += "junit" % "junit" % "4.11" % "test",
@@ -40,8 +40,8 @@ object BuildSettings
 					</license>
 				</licenses>
 				<scm>
-					<url>git@github.com:marcesquerra/KissNumber.git</url>
-					<connection>scm:git:git@github.com:marcesquerra/KissNumber.git</connection>
+					<url>git@github.com:marcesquerra/KissJson.git</url>
+					<connection>scm:git:git@github.com:marcesquerra/KissJson.git</connection>
 				</scm>
 				<developers>
 					<developer>
