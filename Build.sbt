@@ -90,6 +90,6 @@ releaseProcess := Seq[ReleaseStep](
 		extracted.runAggregated(sonatypeReleaseAll in Global in extracted.get(thisProjectRef), state)
 	}, // : ReleaseStep, checks whether `publishTo` is properly set up
 	setNextVersion,                               // : ReleaseStep
-	commitNextVersion,                            // : ReleaseStep
-	pushChanges                                   // : ReleaseStep, also checks that an upstream branch is properly configured
+	commitNextVersion                            // : ReleaseStep
+	//pushChanges                                   // : ReleaseStep, also checks that an upstream branch is properly configured
 )
